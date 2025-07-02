@@ -8,6 +8,7 @@ const refreshToken = require('../services/refreshAccessToken');
 const getCustomers = require('../services/getCustomers');
 // const getLoyaltyPoints = require('../services/getLoyalityPoints');
 const getOrders = require('../services/getOrders');
+const Reward = require('../models/reward.model');
 
 const loginMerchant = async (req, res) => {
     const { email, password } = req.body;
@@ -85,8 +86,53 @@ const getLoyaltySettings = async (req, res) => {
     }
 }
 
+// from frontend check if there is specific option or not
+// if not then this just enable the setting 
+// if there specific then there is change in an reward system
+// from the frontend if the client click in the specific software save then this will specific object
 const updateRewardSettings = async (req, res) => {
-    const merchant = req.merchant
+    const merchant = req.merchant;
+    const settings = req.body;
+
+    const reward = await Reward.findOne({ merchant: merchant._id, rewardType: settings.rewardType });
+
+    try {
+        if (!settings.specific) {
+            if (reward.enabled) {
+                console.log("\nReward already enabled, specific is required\n")
+                return res.status(400).json({ success: false, message: "Reward already enabled, specific settings is required" });
+            } else {
+                console.log("\nEnabling reward\n");
+                reward.enabled = settings.enabled;
+                await reward.save()
+                return res.status(200).json({ success: true, message: "Reward enabled successfully" });
+            }
+        } else {
+            console.log("\nReward specific is changing: ", reward, '\n');
+            reward = {
+                ...reward,
+                ...settings.specific
+            }
+            console.log("\nReward After save:", reward, '\n');
+            await reward.save();
+            return res.status(200).json({ success: true, message: "Reward updated successfully" });
+        }
+    } catch (err) {
+        console.error("\nThere is an error in update reward settings: ", err.message, '\n');
+        return res.status(500).json({ success: false, message: "Something went wrong" });
+    }
+}
+
+const getRewardSettings = async (req, res) => {
+    const merchant = req.merchant;
+    const reward = await Reward.findOne({ merchant: merchant._id, enabled: true });
+
+    if(!reward) {
+        console.log("\nNo reward Found\n");
+        return res.status(404).json({success: false, message: `No reward has found for merchant`});
+    }
+
+    return res.status(200).json({success: true, message: "Reward fetched successfully", data: reward});
 }
 
 const updateLoyaltySettings = async (req, res) => {
@@ -164,7 +210,7 @@ const getMerchantDashboard = async (req, res) => {
             customersDataLength: lengthOfCustomers,
             ordersDataLength: lengthOfOrders
         });
-        
+
     } catch (error) {
         console.error('Error fetching merchant profile:', error.message);
         res.status(500).json({ message: 'Something went wrong' });
@@ -227,6 +273,8 @@ module.exports = {
     getLoyaltySettings,
     updateLoyaltySettings,
     // updateMerchantProfile,
+    getRewardSettings,
+    updateRewardSettings,
     getMerchantDashboard,
     sendMail
 };

@@ -26,6 +26,7 @@ const loyaltySettingsSchema = new mongoose.Schema({
     installAppPoints: eventRuleSchema,          // Award points when customer installs the merchant's app (if applicable)
     feedbackShippingPoints: eventRuleSchema,    // Award points when customer submits feedback about shipping
     repeatPurchasePoints: eventRuleSchema,      // Award points when a customer purchases multiple times (repeat customer)
+    shareReferralPoints: eventRuleSchema,       // Award points when customer refers a friend or shares the app
     profileCompletionPoints: eventRuleSchema,   // Award points when customer completes their profile (e.g., fills all fields)
 
     purchaseAmountThresholdPoints: {            // Award points if a customer spends above a specific amount in a purchase

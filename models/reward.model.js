@@ -7,18 +7,20 @@ const rewardSchema = new mongoose.Schema({
         required: true
     },
 
-    title: {
-        type: String,
-        required: true
+    enabled: {
+        type: Boolean,
+        required: true,
+        default: false
     },
 
     description: String,
 
     pointsRequired: {
         type: Number,
+        default: 150,
         required: true
     },
-
+    
     rewardType: {
         type: String,
         enum: ['discountOrderPrice', 'discountShipping', 'discountOrderPercent', 'cashback', 'freeProduct'],
@@ -27,15 +29,11 @@ const rewardSchema = new mongoose.Schema({
 
     rewardValue: {
         type: Number,
+        default: 10,
         required: true // e.g., 10 => 10% off or 10 EGP
     },
 
     expiresAt: Date,
-
-    isActive: {
-        type: Boolean,
-        default: true
-    },
 
     createdAt: {
         type: Date,
@@ -43,4 +41,5 @@ const rewardSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Reward', rewardSchema);
+const Reward = mongoose.model('Reward', rewardSchema);
+module.exports = Reward;

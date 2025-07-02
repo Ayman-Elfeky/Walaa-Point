@@ -1,6 +1,6 @@
 const Merchant = require('../models/merchant.model');
 const Customer = require('../models/customer.model');
-const CustomerLoyaltyActivity = require('../models/customerLoyaltyActivity.model');
+const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
 
 // Utility to calculate purchase points
 const calculatePurchasePoints = (amount, pointsPerCurrencyUnit) => {
@@ -24,7 +24,7 @@ const awardPoints = async ({ customerId, merchantId, points, event, metadata = {
         createdAt: new Date()
     });
 
-    console.log(`✅ ${points} points awarded to customer ${customerId} for ${event}`);
+    console.log(`\n${points} points awarded to customer ${customerId} for ${event}\n`);
 };
 
 // Main engine to process events
@@ -101,10 +101,26 @@ const LoyaltyEngine = {
                 }
                 break;
 
+            case 'shareReferral':
+                if (loyalty.shareReferralPoints?.enabled) {
+                    await awardPoints({ customerId, merchantId, points: loyalty.shareReferralPoints.points, event: 'shareReferral', metadata: data });
+                }
+                break;
+
             default:
                 console.log(`\n\nUnknown event: ${event}\n\n`);
         }
     }
 };
 
-module.exports = LoyaltyEngine;
+// Wrapper function to match the interface used in controllers
+const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }) => {
+    return await LoyaltyEngine.processEvent({
+        event,
+        customerId: customer._id,
+        merchantId: merchant._id,
+        data: metadata
+    });
+};
+
+module.exports = loyaltyEngineWrapper;

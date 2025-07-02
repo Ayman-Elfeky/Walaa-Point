@@ -6,16 +6,34 @@ const customerSchema = new mongoose.Schema({
         ref: 'Merchant',
         required: true
     },
+
     customerId: {
         type: String,
         required: true
     },
-    name: String,
-    email: String,
-    phone: String,
-    dateOfBirth: Date,
+
+    appliedRewards: [{
+        reward: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Reward'
+        },
+        appliedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+
+    name: { type: String },
+    email: { type: String },
+    phone: { type: String },
+    dateOfBirth: { type: Date },
 
     points: {
+        type: Number,
+        default: 0
+    },
+
+    shareCount: {
         type: Number,
         default: 0
     },

@@ -7,6 +7,8 @@ const {
     // updateMerchantProfile,
     getLoyaltySettings,
     updateLoyaltySettings,
+    getRewardSettings,
+    updateRewardSettings,
 } = require('../controllers/merchant.controller');
 
 // Auth
@@ -17,7 +19,11 @@ router.get('/dashboard', protect, getMerchantDashboard);
 // router.put('/profile', protect, updateMerchantProfile); 
 
 // Loyalty Settings
-router.get('/settings', protect, getLoyaltySettings);
-router.put('/settings', protect, updateLoyaltySettings); 
+router.get('/LoyaltySettings', protect, getLoyaltySettings);
+router.put('/LoyaltySettings', protect, updateLoyaltySettings);
+
+// Reward Settings
+router.get('/rewardSettings', protect, getRewardSettings);
+router.put('/rewardSettings', protect, updateRewardSettings);
 
 module.exports = router;

@@ -1,18 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const protect = require('../middlewares/protect');
 
-const {
-    getRewards,
-    createReward,
-    getRewardById,
-    updateReward,
-    deleteReward
-} = require('../controllers/reward.controller');
+const { applyRewardToCustomer, applyShareRewardToCustomer, generateShareableLink } = require('../controllers/reward.controller');
+const { redeemCoupon } = require('../controllers/redeemCoupon.controller');
 
-router.get('/', getRewards);
-router.post('/', createReward);
-router.get('/:id', getRewardById);
-router.put('/:id', updateReward); // changed from PATCH to PUT
-router.delete('/:id', deleteReward);
+router.post('/rewards/applyReward', protect, applyRewardToCustomer);
+router.post('/rewards/redeem', protect, redeemCoupon);
+router.get('/rewards/generateShareLink/:customerId', protect, generateShareableLink);
+router.get('/share/:customerId', applyShareRewardToCustomer); // Remove protect since this is a public share link
 
 module.exports = router;

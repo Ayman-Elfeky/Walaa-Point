@@ -21,8 +21,8 @@ const rewardSchema = new mongoose.Schema({
 
     rewardType: {
         type: String,
-        enum: ['discount', 'coupon'],
-        default: 'discount'
+        enum: ['discountOrderPrice', 'discountShipping', 'discountOrderPercent', 'cashback', 'freeProduct'],
+        default: 'discountOrderPrice'
     },
 
     rewardValue: {

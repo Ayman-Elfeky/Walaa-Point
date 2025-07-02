@@ -1,17 +1,39 @@
 const mongoose = require('mongoose');
 
+// Schema for individual event-based point rules
+const eventRuleSchema = new mongoose.Schema({
+    enabled: { type: Boolean, default: false }, // Enable/disable this event rule
+    points: { type: Number, default: 0 }        // Points to award for the event
+}, { _id: false });
+
+// Main loyalty settings schema stored inside each merchant document
 const loyaltySettingsSchema = new mongoose.Schema({
-    pointsPerCurrencyUnit: { type: Number, default: 10 }, // e.g. 1 point per 10 SAR
-    rewardThreshold: { type: Number, default: 100 },       // points required to redeem
-    rewardType: { type: String, default: 'discount' },      // 'discount', 'coupon', etc.
-    rewardValue: { type: Number, default: 10 },             // 10% or 10 SAR
-    redemptionLimitPerMonth: { type: Number, default: 5 },
-    enableWelcomePoints: { type: Boolean, default: false },
-    welcomePoints: { type: Number, default: 100 },
-    enableBirthdayPoints: { type: Boolean, default: false },
-    birthdayPoints: { type: Number, default: 50 },
-    expiryMonths: { type: Number, default: 12 },           // points expire after X months
-}, { _id: false }); // prevent nested _id
+    // 🔁 General Loyalty Program Settings
+
+    pointsPerCurrencyUnit: { type: Number, default: 1 }, // How many currency units are needed to earn 1 point (e.g., 1 point per 10 SAR)
+    rewardThreshold: { type: Number, default: 100 },       // Points required before the user can redeem a reward
+    rewardType: { type: String, default: 'discount' },     // Type of reward: 'discount', 'coupon', etc.
+    rewardValue: { type: Number, default: 10 },            // Value of the reward (e.g., 10 SAR discount or 10% off)
+    redemptionLimitPerMonth: { type: Number, default: 5 }, // Max number of redemptions a customer can make per month
+    expiryMonths: { type: Number, default: 12 },           // How long earned points are valid (in months)
+
+    // 🎯 Event-Based Loyalty Rules
+
+    purchasePoints: eventRuleSchema,            // Award points for every purchase made by the customer
+    welcomePoints: eventRuleSchema,             // Award points when customer signs up or is added (first interaction)
+    birthdayPoints: eventRuleSchema,            // Award points to customers on their birthday
+    ratingAppPoints: eventRuleSchema,       // Award points when customer rates the app
+    installAppPoints: eventRuleSchema,          // Award points when customer installs the merchant's app (if applicable)
+    feedbackShippingPoints: eventRuleSchema,    // Award points when customer submits feedback about shipping
+    repeatPurchasePoints: eventRuleSchema,      // Award points when a customer purchases multiple times (repeat customer)
+    profileCompletionPoints: eventRuleSchema,   // Award points when customer completes their profile (e.g., fills all fields)
+
+    purchaseAmountThresholdPoints: {            // Award points if a customer spends above a specific amount in a purchase
+        enabled: { type: Boolean, default: false }, // Enable/disable this rule
+        thresholdAmount: { type: Number, default: 500 }, // Spend threshold to earn points (e.g., if spend > 500 SAR)
+        points: { type: Number, default: 50 }     // Points to award if threshold is met
+    }
+}, { _id: false });
 
 const merchantSchema = new mongoose.Schema({
     installerMobile: { type: String, required: true }, // Mobile number of the installer

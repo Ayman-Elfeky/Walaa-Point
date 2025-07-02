@@ -6,7 +6,7 @@ const { sendEmail } = require('../utils/sendEmail');
 const { generateSecurePassword } = require('../config/crypto');
 const refreshToken = require('../services/refreshAccessToken');
 const getCustomers = require('../services/getCustomers');
-const getLoyaltyPoints = require('../services/getLoyalityPoints');
+// const getLoyaltyPoints = require('../services/getLoyalityPoints');
 const getOrders = require('../services/getOrders');
 
 const loginMerchant = async (req, res) => {
@@ -85,17 +85,26 @@ const getLoyaltySettings = async (req, res) => {
     }
 }
 
+const updateRewardSettings = async (req, res) => {
+    const merchant = req.merchant
+}
+
 const updateLoyaltySettings = async (req, res) => {
-    const settings = req.body;
+    const merchantId = req.merchant._id;
+    const updates = req.body;
+
     try {
-        const merchant = req.merchant; // Get the merchant from the request object
-        if (!merchant) {
-            return res.status(404).json({ message: 'Merchant not found' });
+        // Build dot-notation object for deep merge
+        const updateFields = {};
+        for (const [key, value] of Object.entries(updates)) {
+            updateFields[`loyaltySettings.${key}`] = value;
         }
 
-        // Update loyalty settings in the merchant document
-        merchant.loyaltySettings = settings;
-        await merchant.save();
+        const merchant = await Merchant.findByIdAndUpdate(
+            merchantId,
+            { $set: updateFields },
+            { new: true }
+        );
 
         res.status(200).json({
             success: true,
@@ -106,7 +115,8 @@ const updateLoyaltySettings = async (req, res) => {
         console.error('Error updating loyalty settings:', error.message);
         res.status(500).json({ message: 'Something went wrong' });
     }
-}
+};
+
 
 // i will make this to get the dashboard of the merchant
 // but i need to get the access token and refresh token from the merchant model

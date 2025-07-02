@@ -3,6 +3,8 @@ const generateSecurePassword = require('../config/crypto');
 const { randomPasswordTemplate } = require('../utils/templates/randomPass.template');
 const { sendEmail } = require('../utils/sendEmail');
 const bcrypt = require('bcryptjs');
+const loyaltyEngine = require('../services/loyalityEngine');
+const Customer = require('../models/customer.model');
 
 const webhookLogic = (req, res) => {
     console.log('🔔 Webhook request received:', req.body);
@@ -17,149 +19,280 @@ const webhookLogic = (req, res) => {
 
     switch (event) {
         case 'app.installed':
-            console.log("# App installed event triggered")
             return onAppInstalled(req, res);
         case 'app.uninstalled':
-            console.log("# App uninstalled event triggered")
             return onAppUninstalled(req, res);
         case 'app.store.authorize':
-            console.log("# Store authorization event triggered")
             return onStoreAuthorize(req, res);
+        // case 'app.feedback.created':
+        //     return onFeedbackCreated(req, res);
+        case 'order.created':
+            return onOrderCreated(req, res);
+        case 'review.added':
+            return onReviewAdded(req, res);
+        case 'customer.login':
+            return onCustomerLogin(req, res);
         default:
-            console.log(`# Unknown event type received: ${event}`);
             return res.status(400).json({ message: 'Unknown event type' });
+    }
+};
+
+const onOrderCreated = async (req, res) => {
+    try {
+        const { merchant: merchantId, data } = req.body;
+        const merchant = await Merchant.findOne({ merchantId });
+        const customer = await Customer.findOne({ customerId: data.customer_id, merchant: merchant._id });
+
+        if (!merchant || !customer) return res.status(404).json({ message: 'Merchant or Customer not found' });
+
+        const metadata = { orderId: data.id, amount: data.total };
+
+        const result = await loyaltyEngine({
+            event: 'purchase',
+            merchant,
+            customer,
+            metadata
+        });
+
+        if (merchant.loyaltySettings?.purchaseAmountThresholdPoints?.enabled && data.total >= merchant.loyaltySettings.purchaseAmountThresholdPoints.thresholdAmount) {
+            await loyaltyEngine({
+                event: 'purchaseAmountThresholdPoints',
+                merchant,
+                customer,
+                metadata
+            });
+        }
+
+        res.status(200).json({ message: 'Order processed successfully', result });
+    } catch (error) {
+        console.error('Error processing order:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onCustomerLogin = async (req, res) => {
+    try {
+        console.log('\nCustomer login webhook received');
+        console.log('Request body:', req.body);
+        
+        const { merchant: merchantId, data } = req.body;
+        
+        if (!merchantId || !data?.customer?.id) {
+            console.log('\nMissing merchant ID or customer ID in webhook data\n');
+            return res.status(400).json({ message: 'Missing required data' });
+        }
+
+        // Find the merchant
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            console.log(`❌ Merchant not found for ID: ${merchantId}`);
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        // Find the customer
+        const customer = await Customer.findOne({ 
+            customerId: data.customer.id, 
+            merchant: merchant._id 
+        });
+        
+        if (!customer) {
+            console.log(`Customer not found for ID: ${data.customer.id}`);
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        console.log(`Customer found: ${customer.name || customer.customerId}`);
+
+        // Check if today's date is the customer's birthday
+        const today = new Date();
+        const isBirthday = customer.dateOfBirth && 
+            customer.dateOfBirth.getMonth() === today.getMonth() && 
+            customer.dateOfBirth.getDate() === today.getDate();
+
+        if (isBirthday) {
+            console.log(`It's ${customer.name || customer.customerId}'s birthday today!`);
+            
+            // Check if merchant has birthday points enabled
+            if (merchant.loyaltySettings?.birthdayPoints?.enabled) {
+                const birthdayPoints = merchant.loyaltySettings.birthdayPoints.points || 0;
+                
+                // Award birthday points using loyalty engine
+                const result = await loyaltyEngine({
+                    event: 'birthday',
+                    merchant,
+                    customer,
+                    metadata: { birthdayDate: today.toISOString() }
+                });
+
+                console.log(`Birthday points awarded: ${birthdayPoints} points`);
+
+                return res.status(200).json({
+                    message: 'Happy Birthday! Points awarded',
+                    isBirthday: true,
+                    pointsAwarded: birthdayPoints,
+                    result
+                });
+            } else {
+                console.log('Birthday detected but birthday points not enabled for merchant');
+                return res.status(200).json({
+                    message: 'Happy Birthday!',
+                    isBirthday: true,
+                    pointsAwarded: 0
+                });
+            }
+        } else {
+            console.log('Not customer\'s birthday today');
+            return res.status(200).json({
+                message: 'Customer login processed',
+                isBirthday: false
+            });
+        }
+
+    } catch (error) {
+        console.error('Error processing customer login:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 }
 
+const onFeedbackCreated = async (req, res) => {
+    try {
+        const { merchant: merchantId, data } = req.body;
+        const merchant = await Merchant.findOne({ merchantId });
+        const customer = await Customer.findOne({ customerId: data.customer_id, merchant: merchant._id });
+
+        if (!merchant || !customer) return res.status(404).json({ message: 'Merchant or Customer not found' });
+
+        const metadata = { feedbackId: data.id, rating: data.rating };
+
+        const result = await loyaltyEngine({
+            event: 'feedbackShippingPoints',
+            merchant,
+            customer,
+            metadata
+        });
+
+        res.status(200).json({ message: 'Feedback processed', result });
+    } catch (error) {
+        console.error('Error processing feedback:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onReviewAdded = async (req, res) => {
+    try {
+        const { merchant: merchantId, data } = req.body;
+        const merchant = await Merchant.findOne({ merchantId });
+        const customer = await Customer.findOne({ customerId: data.customer.id, merchant: merchant._id });
+
+        if (!merchant || !customer) return res.status(404).json({ message: 'Merchant or Customer not found' });
+
+        const metadata = {
+            rating: data.rating,
+            productId: data.product?.id,
+            content: data.content
+        };
+
+        const result = await loyaltyEngine({
+            event: 'ratingProductPoints',
+            merchant,
+            customer,
+            metadata
+        });
+
+        res.status(200).json({ message: 'Review processed', result });
+    } catch (error) {
+        console.error('Error processing review:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 const onStoreAuthorize = async (req, res) => {
-    console.log('\nHandling store authorize webhook:', req.body, '\n');
     try {
         const { data } = req.body;
-        console.log('\nData access token: ', data.access_token);
-        // Fetch merchant details from Salla API to get email
         const merchantDetails = await fetchMerchantDetails(data.access_token);
-        console.log('\nMerchant Details:', merchantDetails, '\n');
 
-        // Generate secure password
         const randomPassword = generateSecurePassword();
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-        // Update merchant with complete information 
         const newMerchant = new Merchant({
-            // Installer information (from API user data)
             installerMobile: merchantDetails.data.mobile,
             installerRole: merchantDetails.data.role,
             installerName: merchantDetails.data.name,
             installerEmail: merchantDetails.data.email,
-
-            // Installation details
             installationId: merchantDetails.data.id.toString(),
-
-            // Merchant information (from API merchant data)
             merchantUsername: merchantDetails.data.merchant.username,
             merchantName: merchantDetails.data.merchant.name || merchantDetails.data.merchant.username,
             merchantId: merchantDetails.data.merchant.id.toString(),
             merchantAvatar: merchantDetails.data.merchant.avatar,
             merchantDomain: merchantDetails.data.merchant.domain,
             merchantSubscription: merchantDetails.data.merchant.subscription,
-
-            // Authentication & tokens
-            passwordHash: hashedPassword,
+            password: hashedPassword,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
-            //this will be saved in the database as a date as milliseconds
-            accessTokenExpiresAt: new Date(data.expires * 1000), 
+            accessTokenExpiresAt: new Date(data.expires * 1000),
             refreshTokenExpiresAt: new Date(merchantDetails.data.context.exp * 1000),
             scope: data.scope.split(' '),
-
-            // Store details
             storeId: merchantDetails.data.merchant.id.toString(),
-
-            // Merchant creation date from API
             merchantCreatedAt: new Date(merchantDetails.data.merchant.created_at)
         });
-        await newMerchant.save();
-        console.log('Merchant authorized and saved successfully:', newMerchant);
 
-        // Prepare and send welcome email with random password
-        const emailToBeSend = merchantDetails.data.email;
-        const emailSubject = 'مرحباً بك في لويالتي - Welcome to Loyalty';
-        const emailHtml = randomPasswordTemplate(emailToBeSend, randomPassword);
-        
-        // Send welcome email with password
+        await newMerchant.save();
+
+        const emailHtml = randomPasswordTemplate(merchantDetails.data.email, randomPassword);
         try {
-            await sendEmail(emailToBeSend, emailSubject, emailHtml);
-            console.log('Welcome email sent successfully to:', emailToBeSend);
+            await sendEmail(merchantDetails.data.email, 'Welcome to Loyalty - مرحباً بك في لويالتي', emailHtml);
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
-            // Don't fail the webhook if email fails
         }
 
-        res.status(200).json({
-            message: 'Store authorized successfully and welcome email sent',
-            merchant: {
-                id: newMerchant._id,
-                name: newMerchant.installerName,
-                email: newMerchant.installerEmail,
-                merchantName: newMerchant.merchantName,
-                merchantId: newMerchant.merchantId
-            }
-        });
+        res.status(200).json({ message: 'Store authorized and saved', merchantId: newMerchant._id });
     } catch (error) {
-        console.error('Error handling store authorize webhook:', error);
+        console.error('Error in store authorization:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
 
 const onAppInstalled = async (req, res) => {
     return res.status(200).json({ message: 'App installed successfully' });
-}
+};
 
 const onAppUninstalled = async (req, res) => {
-    console.log('🔔 App uninstalled event received:', req.body);
-    const { merchant } = req.body;
-    const existingMerchant = await Merchant.findOneAndDelete({ merchantId: merchant });
-    if (existingMerchant) {
-        console.log('Merchant uninstalled successfully:', existingMerchant);
-        return res.status(200).json({ message: 'App uninstalled successfully' });
-    } else {
-        return res.status(404).json({ message: 'Merchant not found' });
-    }
-}
+    try {
+        const { merchant } = req.body;
+        const deleted = await Merchant.findOneAndDelete({ merchantId: merchant });
+        if (!deleted) return res.status(404).json({ message: 'Merchant not found' });
 
-// Helper function to fetch merchant details from Salla API
+        res.status(200).json({ message: 'App uninstalled successfully' });
+    } catch (error) {
+        console.error('Error during uninstall:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 const fetchMerchantDetails = async (accessToken) => {
     try {
-        // Fetch user info
         const response = await fetch('https://accounts.salla.sa/oauth2/user/info', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/json'
             }
         });
-        console.log("\nResponse: ", response, '\n');
 
-        if (!response.ok) {
-            throw new Error(`Salla API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("\nFetched Data: ", data, '\n');
-        return data; // Return the complete API response
+        if (!response.ok) throw new Error(`Salla API error: ${response.status}`);
+        return await response.json();
     } catch (error) {
-        console.error('Error fetching merchant details from Salla:', error);
-        // Return fallback data if API call fails
+        console.error('Error fetching merchant details:', error);
         return {
             data: {
-                name: 'Unknown Merchant',
+                name: 'Unknown',
                 email: 'unknown@merchant.com',
                 merchant: {
                     id: 0,
-                    domain: 'unknown.com'
+                    domain: 'unknown.com',
+                    username: 'unknown'
                 },
                 context: {
                     app: 0,
-                    exp: Date.now() / 1000 + 3600 // 1 hour from now
+                    exp: Date.now() / 1000 + 3600
                 }
             }
         };

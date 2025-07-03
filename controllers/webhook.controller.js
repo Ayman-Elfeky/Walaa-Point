@@ -7,15 +7,15 @@ const loyaltyEngine = require('../services/loyalityEngine');
 const Customer = require('../models/customer.model');
 
 const webhookLogic = (req, res) => {
-    console.log('🔔 Webhook request received:', req.body);
+    console.log('\nWebhook request received:', req.body, '\n');
     const { event } = req.body;
 
     if (!event) {
-        console.log('❌ No event type provided in webhook request');
+        console.log('\nNo event type provided in webhook request\n');
         return res.status(400).json({ message: 'Event type is required' });
     }
 
-    console.log(`📋 Processing webhook event: ${event}`);
+    console.log(`\nProcessing webhook event: ${event}\n`);
 
     switch (event) {
         case 'app.installed':
@@ -72,11 +72,11 @@ const onOrderCreated = async (req, res) => {
 
 const onCustomerLogin = async (req, res) => {
     try {
-        console.log('\nCustomer login webhook received');
-        console.log('Request body:', req.body);
-        
+        console.log('\nCustomer login webhook received\n');
+        console.log('\nRequest body:', req.body, '\n');
+
         const { merchant: merchantId, data } = req.body;
-        
+
         if (!merchantId || !data?.customer?.id) {
             console.log('\nMissing merchant ID or customer ID in webhook data\n');
             return res.status(400).json({ message: 'Missing required data' });
@@ -85,36 +85,36 @@ const onCustomerLogin = async (req, res) => {
         // Find the merchant
         const merchant = await Merchant.findOne({ merchantId });
         if (!merchant) {
-            console.log(`❌ Merchant not found for ID: ${merchantId}`);
+            console.log(`\nMerchant not found for ID: ${merchantId}\n`);
             return res.status(404).json({ message: 'Merchant not found' });
         }
 
         // Find the customer
-        const customer = await Customer.findOne({ 
-            customerId: data.customer.id, 
-            merchant: merchant._id 
+        const customer = await Customer.findOne({
+            customerId: data.customer.id,
+            merchant: merchant._id
         });
-        
+
         if (!customer) {
-            console.log(`Customer not found for ID: ${data.customer.id}`);
+            console.log(`\nCustomer not found for ID: ${data.customer.id}\n`);
             return res.status(404).json({ message: 'Customer not found' });
         }
 
-        console.log(`Customer found: ${customer.name || customer.customerId}`);
+        console.log(`\nCustomer found: ${customer.name || customer.customerId}\n`);
 
         // Check if today's date is the customer's birthday
         const today = new Date();
-        const isBirthday = customer.dateOfBirth && 
-            customer.dateOfBirth.getMonth() === today.getMonth() && 
+        const isBirthday = customer.dateOfBirth &&
+            customer.dateOfBirth.getMonth() === today.getMonth() &&
             customer.dateOfBirth.getDate() === today.getDate();
 
         if (isBirthday) {
-            console.log(`It's ${customer.name || customer.customerId}'s birthday today!`);
-            
+            console.log(`\nIt's ${customer.name || customer.customerId}'s birthday today!\n`);
+
             // Check if merchant has birthday points enabled
             if (merchant.loyaltySettings?.birthdayPoints?.enabled) {
                 const birthdayPoints = merchant.loyaltySettings.birthdayPoints.points || 0;
-                
+
                 // Award birthday points using loyalty engine
                 const result = await loyaltyEngine({
                     event: 'birthday',
@@ -123,7 +123,7 @@ const onCustomerLogin = async (req, res) => {
                     metadata: { birthdayDate: today.toISOString() }
                 });
 
-                console.log(`Birthday points awarded: ${birthdayPoints} points`);
+                console.log(`\nBirthday points awarded: ${birthdayPoints} points\n`);
 
                 return res.status(200).json({
                     message: 'Happy Birthday! Points awarded',
@@ -132,7 +132,7 @@ const onCustomerLogin = async (req, res) => {
                     result
                 });
             } else {
-                console.log('Birthday detected but birthday points not enabled for merchant');
+                console.log('\nBirthday detected but birthday points not enabled for merchant\n');
                 return res.status(200).json({
                     message: 'Happy Birthday!',
                     isBirthday: true,
@@ -140,7 +140,7 @@ const onCustomerLogin = async (req, res) => {
                 });
             }
         } else {
-            console.log('Not customer\'s birthday today');
+            console.log('\nNot customer\'s birthday today\n');
             return res.status(200).json({
                 message: 'Customer login processed',
                 isBirthday: false
@@ -148,7 +148,7 @@ const onCustomerLogin = async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Error processing customer login:', error);
+        console.error('\nError processing customer login:', error, '\n');
         res.status(500).json({ message: 'Internal server error' });
     }
 }

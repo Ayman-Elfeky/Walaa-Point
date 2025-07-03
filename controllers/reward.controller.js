@@ -3,6 +3,8 @@ const Reward = require('../models/reward.model');
 const Coupon = require('../models/coupon.model');
 const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
 const loyaltyEngine = require('../services/loyalityEngine');
+const { sendEmail } = require('../utils/sendEmail');
+const { notification } = require('../utils/templates/notification.template');
 const generateCouponCode = require('../utils/generateCouponCode');
 
 const applyShareRewardToCustomer = async (req, res) => {
@@ -239,6 +241,23 @@ const applyRewardToCustomer = async (req, res) => {
         console.log(`\nCoupon code: ${coupon.code}\n`);
         console.log(`\nReward: ${reward.rewardType} (${reward.rewardValue})\n`);
         console.log(`\nPoints required: ${reward.pointsRequired}\n`);
+
+        // Send notification email if enabled
+        if (merchant.notificationSettings?.earnNewCoupon && customer.email) {
+            try {
+                const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                const subjectArabic = 'تم إنشاء كوبون خصم جديد!';
+                const contentArabic = `تهانينا! تم إنشاء كوبون خصم جديد لك من متجر ${merchant.merchantName}`;
+                const contentEnglish = `Congratulations! A new discount coupon has been created for you from ${merchant.merchantName} store`;
+
+                const emailHtml = notification(storeLink, contentArabic, contentEnglish, coupon.code);
+                await sendEmail(customer.email, subjectArabic, emailHtml);
+
+                console.log(`\nCoupon notification email sent to ${customer.email}\n`);
+            } catch (emailError) {
+                console.error(`\nError sending coupon notification email: ${emailError.message}\n`);
+            }
+        }
 
         return res.status(200).json({
             success: true,

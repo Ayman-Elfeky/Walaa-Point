@@ -13,6 +13,11 @@ const {
     updateIdentityAndDesignSettings
 } = require('../controllers/merchant.controller');
 
+const {
+    updateNotificationsSettings,
+    getNotificationsSettings
+} = require('../controllers/notification.controller');
+
 
 // Auth
 router.post('/login', loginMerchant);
@@ -33,6 +38,8 @@ router.put('/rewardSettings', protect, updateRewardSettings);
 router.get('/identityAndDesign', protect, getIdentityAndDesignSettings);
 router.put('/identityAndDesign', protect, updateIdentityAndDesignSettings);
 
-// notification
+// Notification Settings
+router.get('/notifications', protect, getNotificationsSettings);
 router.put('/notifications', protect, updateNotificationsSettings);
+
 module.exports = router;

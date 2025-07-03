@@ -8,12 +8,14 @@ const calculatePurchasePoints = (amount, pointsPerCurrencyUnit) => {
 };
 
 // Reusable function to award points and save log
-const awardPoints = async ({ customerId, merchantId, points, event, metadata = {} }) => {
-    const customer = await Customer.findOne({ _id: customerId, merchant: merchantId });
+const awardPoints = async ({ merchant, customerId, points, event, metadata = {} }) => {
+    const customer = await Customer.findOne({ _id: customerId, merchant: merchant._id });
     if (!customer) return;
 
     customer.points += points;
+    merchant.customersPoints = (merchant.customersPoints || 0) + points; // Update total points for the merchant
     await customer.save();
+    await merchant.save();
 
     await CustomerLoyaltyActivity.create({
         customerId,
@@ -49,6 +51,7 @@ const LoyaltyEngine = {
                     const thresholdAmount = loyalty.purchaseAmountThresholdPoints.thresholdAmount;
                     if (data.amount >= thresholdAmount) {
                         await awardPoints({
+                            merchant,
                             customerId,
                             merchantId,
                             points: loyalty.purchaseAmountThresholdPoints.points,

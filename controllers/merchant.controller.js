@@ -127,12 +127,12 @@ const getRewardSettings = async (req, res) => {
     const merchant = req.merchant;
     const reward = await Reward.findOne({ merchant: merchant._id, enabled: true });
 
-    if(!reward) {
+    if (!reward) {
         console.log("\nNo reward Found\n");
-        return res.status(404).json({success: false, message: `No reward has found for merchant`});
+        return res.status(404).json({ success: false, message: `No reward has found for merchant` });
     }
 
-    return res.status(200).json({success: true, message: "Reward fetched successfully", data: reward});
+    return res.status(200).json({ success: true, message: "Reward fetched successfully", data: reward });
 }
 
 const updateLoyaltySettings = async (req, res) => {
@@ -268,6 +268,102 @@ const sendMail = async (req, res) => {
     }
 }
 
+const getIdentityAndDesignSettings = async (req, res) => {
+    try {
+        console.log('\nFetching identity and design settings\n');
+
+        const merchant = req.merchant;
+        if (!merchant) {
+            console.log('\nMerchant not found\n');
+            return res.status(404).json({ success: false, message: 'Merchant not found' });
+        }
+
+        const identityAndDesign = merchant.identityAndDesign || {};
+
+        console.log('\nIdentity and design settings fetched successfully\n');
+
+        res.status(200).json({
+            success: true,
+            message: 'Identity and design settings fetched successfully',
+            identityAndDesign
+        });
+    } catch (error) {
+        console.error('\nError fetching identity and design settings:', error, '\n');
+        res.status(500).json({ success: false, message: 'Something went wrong' });
+    }
+};
+
+const updateIdentityAndDesignSettings = async (req, res) => {
+    try {
+        console.log('\nUpdating identity and design settings\n');
+        console.log('\nRequest body:', JSON.stringify(req.body, null, 2), '\n');
+
+        const merchantId = req.merchant._id;
+        const updates = req.body;
+
+        // Validate color format for hex colors if provided
+        const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+
+        if (updates.globalIdentity?.primaryColor && !hexColorRegex.test(updates.globalIdentity.primaryColor)) {
+            console.log('\nInvalid primary color format\n');
+            return res.status(400).json({ success: false, message: 'Invalid primary color format. Use hex format (e.g., #596581)' });
+        }
+
+        if (updates.globalIdentity?.secondaryColor && !hexColorRegex.test(updates.globalIdentity.secondaryColor)) {
+            console.log('\nInvalid secondary color format\n');
+            return res.status(400).json({ success: false, message: 'Invalid secondary color format. Use hex format (e.g., #ffffff)' });
+        }
+
+        // Build dot-notation object for deep merge
+        const updateFields = {};
+        for (const [key, value] of Object.entries(updates)) {
+            if (typeof value === 'object' && value !== null) {
+                // Handle nested objects like globalIdentity, windowProgram, windowOpenButton
+                for (const [nestedKey, nestedValue] of Object.entries(value)) {
+                    updateFields[`identityAndDesign.${key}.${nestedKey}`] = nestedValue;
+                }
+            } else {
+                updateFields[`identityAndDesign.${key}`] = value;
+            }
+        }
+
+        console.log('\nUpdate fields:', JSON.stringify(updateFields, null, 2), '\n');
+
+        const merchant = await Merchant.findByIdAndUpdate(
+            merchantId,
+            { $set: updateFields },
+            { new: true, runValidators: true }
+        );
+
+        if (!merchant) {
+            console.log('\nMerchant not found during update\n');
+            return res.status(404).json({ success: false, message: 'Merchant not found' });
+        }
+
+        console.log('\nIdentity and design settings updated successfully\n');
+
+        res.status(200).json({
+            success: true,
+            message: 'Identity and design settings updated successfully',
+            identityAndDesign: merchant.identityAndDesign
+        });
+    } catch (error) {
+        console.error('\nError updating identity and design settings:', error, '\n');
+
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: validationErrors
+            });
+        }
+
+        res.status(500).json({ success: false, message: 'Something went wrong' });
+    }
+};
+
 module.exports = {
     loginMerchant,
     getLoyaltySettings,
@@ -276,5 +372,7 @@ module.exports = {
     getRewardSettings,
     updateRewardSettings,
     getMerchantDashboard,
-    sendMail
+    sendMail,
+    getIdentityAndDesignSettings,
+    updateIdentityAndDesignSettings
 };

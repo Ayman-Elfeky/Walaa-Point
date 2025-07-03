@@ -1,5 +1,24 @@
 const mongoose = require('mongoose');
 
+const notificationSettingsSchema = new mongoose.Schema({
+    earnNewPoints: {
+        type: Boolean,
+        default: true
+    },
+    earnNewCoupon: {
+        type: Boolean,
+        default: true
+    },
+    earnNewCouponForShare: {
+        type: Boolean,
+        default: true
+    },
+    birthday: {
+        type: Boolean,
+        default: true
+    },
+})
+
 // Schema for individual event-based point rules
 const eventRuleSchema = new mongoose.Schema({
     enabled: { type: Boolean, default: false }, // Enable/disable this event rule
@@ -36,6 +55,60 @@ const loyaltySettingsSchema = new mongoose.Schema({
     }
 }, { _id: false });
 
+// Identity and Design schema for merchant customization
+const identityAndDesignSchema = new mongoose.Schema({
+    // Global Identity Settings
+    globalIdentity: {
+        primaryColor: { type: String, default: '#596581' }, // Primary brand color
+        secondaryColor: { type: String, default: '#fff' }   // Secondary brand color
+    },
+
+    // Window Program Settings
+    windowProgram: {
+        backgroundColor: {
+            type: String,
+            enum: ['primary', 'secondary'],
+            default: 'primary'
+        }, // Background color reference (primary or secondary from globalIdentity)
+        textColor: {
+            type: String,
+            enum: ['black', 'white'],
+            default: 'white'
+        } // Text color for the window
+    },
+
+    // Window Open Button Settings
+    windowOpenButton: {
+        name: { type: String, default: 'Loyalty Program' }, // Button text/name
+        backgroundColor: {
+            type: String,
+            enum: ['primary', 'secondary'],
+            default: 'primary'
+        }, // Background color reference (primary or secondary from globalIdentity)
+        textColor: {
+            type: String,
+            enum: ['black', 'white'],
+            default: 'white'
+        }, // Text color for the button
+        buttonPlaceVertically: {
+            type: String,
+            enum: ['bottom', 'center'],
+            default: 'bottom'
+        }, // Vertical position of the button
+        buttonPlaceHorizontally: {
+            type: String,
+            enum: ['left', 'right'],
+            default: 'right'
+        }, // Horizontal position of the button
+        size: {
+            type: String,
+            enum: ['small', 'medium', 'large'],
+            default: 'medium'
+        }, // Size of the button
+        enableButton: { type: Boolean, default: true } // Enable/disable the button
+    }
+}, { _id: false });
+
 const merchantSchema = new mongoose.Schema({
     installerMobile: { type: String, required: true }, // Mobile number of the installer
     installerRole: { type: String, required: true }, // Role of the installer
@@ -56,16 +129,27 @@ const merchantSchema = new mongoose.Schema({
     scope: { type: [String] },          // Scopes granted to the app
     // shopName: { type: String, required: true },
     // shopUrl: { type: String, required: true },
-    passwordHash: { type: String, required: true },
+    password: { type: String, required: true },
     storeId: { type: String, required: true },        // Salla store ID
     // storeDomain: { type: String },                    // Optional shop domain
     isActive: { type: Boolean, default: true },
-
+    customersPoints: {
+        type: Number,
+        default: 0 // Total points accumulated by the merchant
+    },
     loyaltySettings: {
         type: loyaltySettingsSchema,
         default: () => ({}) // ensures new object per merchant
     },
-    __v: {type: Number},  // For user validation
+    notificationSettings: {
+        type: notificationSettingsSchema,
+        default: () => ({})
+    },
+    identityAndDesign: {
+        type: identityAndDesignSchema,
+        default: () => ({}) // ensures new object per merchant
+    },
+    __v: { type: Number },  // For user validation
     merchantCreatedAt: { type: Date, default: Date.now }
 }, {
     timestamps: true

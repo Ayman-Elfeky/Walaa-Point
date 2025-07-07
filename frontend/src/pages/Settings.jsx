@@ -352,22 +352,22 @@ const Settings = () => {
   const renderNotificationsTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900 mb-4">Email Notifications</h3>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.emailNotifications')}</h3>
         <div className="space-y-4">
           {[
-            { key: 'emailNewCustomer', label: 'New Customer Registration', description: 'Get notified when new customers join your loyalty program' },
-            { key: 'emailOrderComplete', label: 'Order Completion', description: 'Receive notifications when customers complete orders' },
-            { key: 'emailPointsEarned', label: 'Points Earned', description: 'Get updates when customers earn loyalty points' },
-            { key: 'emailRewardRedeemed', label: 'Reward Redemption', description: 'Be notified when customers redeem rewards' },
-            { key: 'emailWeeklyReport', label: 'Weekly Reports', description: 'Receive weekly analytics and performance reports' },
-            { key: 'emailMonthlyReport', label: 'Monthly Reports', description: 'Get comprehensive monthly business insights' }
+            { key: 'emailNewCustomer', label: t('settings.newCustomerRegistration'), description: t('settings.newCustomerRegistrationDesc') },
+            { key: 'emailOrderComplete', label: t('settings.orderCompletion'), description: t('settings.orderCompletionDesc') },
+            { key: 'emailPointsEarned', label: t('settings.pointsEarned'), description: t('settings.pointsEarnedDesc') },
+            { key: 'emailRewardRedeemed', label: t('settings.rewardRedemption'), description: t('settings.rewardRedemptionDesc') },
+            { key: 'emailWeeklyReport', label: t('settings.weeklyReports'), description: t('settings.weeklyReportsDesc') },
+            { key: 'emailMonthlyReport', label: t('settings.monthlyReports'), description: t('settings.monthlyReportsDesc') }
           ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg">
+            <div key={item.key} className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center">
                 <Mail className="h-5 w-5 text-secondary-400 mr-3 rtl:mr-0 rtl:ml-3" />
                 <div>
-                  <span className="text-secondary-900 font-medium">{item.label}</span>
-                  <p className="text-sm text-secondary-600 mt-1">{item.description}</p>
+                  <span className="text-secondary-900 dark:text-gray-100 font-medium">{item.label}</span>
+                  <p className="text-sm text-secondary-600 dark:text-gray-300 mt-1">{item.description}</p>
                 </div>
               </div>
               <label className="toggle">
@@ -384,22 +384,22 @@ const Settings = () => {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900 mb-4">In-App Notifications</h3>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.inAppNotifications')}</h3>
         <div className="space-y-4">
           {[
-            { key: 'appNewCustomer', label: 'New Customer Alerts', description: 'Real-time alerts when customers join' },
-            { key: 'appOrderComplete', label: 'Order Completion Alerts', description: 'Instant notifications for completed orders' },
-            { key: 'appPointsEarned', label: 'Points Activity', description: 'Live updates on customer point activities' },
-            { key: 'appRewardRedeemed', label: 'Reward Redemptions', description: 'Immediate alerts for reward usage' },
-            { key: 'appLowStock', label: 'Low Stock Warnings', description: 'Get warned when reward inventory is low' },
-            { key: 'appSystemUpdates', label: 'System Updates', description: 'Important system and feature announcements' }
+            { key: 'appNewCustomer', label: t('settings.newCustomerAlerts'), description: t('settings.newCustomerAlertsDesc') },
+            { key: 'appOrderComplete', label: t('settings.orderCompletionAlerts'), description: t('settings.orderCompletionAlertsDesc') },
+            { key: 'appPointsEarned', label: t('settings.pointsActivity'), description: t('settings.pointsActivityDesc') },
+            { key: 'appRewardRedeemed', label: t('settings.rewardRedemptions'), description: t('settings.rewardRedemptionsDesc') },
+            { key: 'appLowStock', label: t('settings.lowStockWarnings'), description: t('settings.lowStockWarningsDesc') },
+            { key: 'appSystemUpdates', label: t('settings.systemUpdates'), description: t('settings.systemUpdatesDesc') }
           ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg">
+            <div key={item.key} className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center">
                 <Bell className="h-5 w-5 text-secondary-400 mr-3 rtl:mr-0 rtl:ml-3" />
                 <div>
-                  <span className="text-secondary-900 font-medium">{item.label}</span>
-                  <p className="text-sm text-secondary-600 mt-1">{item.description}</p>
+                  <span className="text-secondary-900 dark:text-gray-100 font-medium">{item.label}</span>
+                  <p className="text-sm text-secondary-600 dark:text-gray-300 mt-1">{item.description}</p>
                 </div>
               </div>
               <label className="toggle">
@@ -415,14 +415,13 @@ const Settings = () => {
         </div>
       </div>
       
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
         <div className="flex items-start">
           <Bell className="h-5 w-5 text-blue-500 mr-3 rtl:mr-0 rtl:ml-3 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="font-medium text-blue-900 mb-1">Notification Settings</h4>
-            <p className="text-sm text-blue-700">
-              These settings control what notifications you receive both via email and in the app. 
-              In-app notifications appear in real-time in your dashboard header.
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">{t('settings.notificationSettings')}</h4>
+            <p className="text-sm text-blue-700 dark:text-blue-200">
+              {t('settings.notificationSettingsDesc')}
             </p>
           </div>
         </div>
@@ -435,7 +434,7 @@ const Settings = () => {
           className="btn btn-primary"
         >
           <Save className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-          Save Preferences
+          {t('settings.savePreferences')}
         </button>
       </div>
     </div>

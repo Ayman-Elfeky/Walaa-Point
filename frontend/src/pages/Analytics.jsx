@@ -223,8 +223,8 @@ const Analytics = () => {
           className="card"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-secondary-900">
-              Customer Growth
+            <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100">
+              {t('analytics.customerGrowth')}
             </h3>
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
               <select
@@ -232,9 +232,9 @@ const Analytics = () => {
                 value={selectedMetric}
                 onChange={(e) => setSelectedMetric(e.target.value)}
               >
-                <option value="newCustomers">New Customers</option>
-                <option value="activeCustomers">Active Customers</option>
-                <option value="totalCustomers">Total Customers</option>
+                <option value="newCustomers">{t('analytics.newCustomers')}</option>
+                <option value="activeCustomers">{t('analytics.activeCustomers')}</option>
+                <option value="totalCustomers">{t('analytics.totalCustomers')}</option>
               </select>
             </div>
           </div>
@@ -271,17 +271,17 @@ const Analytics = () => {
           className="card"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-secondary-900">
-              Points Flow
+            <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100">
+              {t('analytics.pointsFlow')}
             </h3>
             <div className="flex items-center space-x-4 rtl:space-x-reverse text-sm">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-2 rtl:mr-0 rtl:ml-2" />
-                <span>Issued</span>
+                <span className="text-secondary-600 dark:text-gray-300">{t('analytics.issued')}</span>
               </div>
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-red-500 rounded-full mr-2 rtl:mr-0 rtl:ml-2" />
-                <span>Redeemed</span>
+                <span className="text-secondary-600 dark:text-gray-300">{t('analytics.redeemed')}</span>
               </div>
             </div>
           </div>
@@ -327,23 +327,23 @@ const Analytics = () => {
           transition={{ delay: 0.6 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-secondary-900 mb-6">
-            Reward Performance
+          <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-6">
+            {t('analytics.rewardPerformance')}
           </h3>
           <div className="space-y-4">
             {rewardPerformance.map((reward, index) => (
-              <div key={reward.name} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
+              <div key={reward.name} className="flex items-center justify-between p-3 bg-secondary-50 dark:bg-gray-800 rounded-lg">
                 <div>
-                  <p className="font-medium text-secondary-900">{reward.name}</p>
-                  <p className="text-sm text-secondary-600">
-                    {formatNumber(reward.redemptions)} redemptions
+                  <p className="font-medium text-secondary-900 dark:text-gray-100">{reward.name}</p>
+                  <p className="text-sm text-secondary-600 dark:text-gray-300">
+                    {formatNumber(reward.redemptions)} {t('analytics.redemptions')}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-primary-600">
                     {formatPercentage(reward.conversionRate / 100)}
                   </p>
-                  <p className="text-xs text-secondary-500">conversion</p>
+                  <p className="text-xs text-secondary-500 dark:text-gray-400">{t('analytics.conversion')}</p>
                 </div>
               </div>
             ))}
@@ -357,8 +357,8 @@ const Analytics = () => {
           transition={{ delay: 0.7 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-secondary-900 mb-6">
-            Customer Segments
+          <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-6">
+            {t('analytics.customerSegments')}
           </h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
@@ -385,9 +385,9 @@ const Analytics = () => {
                     className="w-3 h-3 rounded-full mr-2 rtl:mr-0 rtl:ml-2"
                     style={{ backgroundColor: segment.color }}
                   />
-                  <span className="text-sm text-secondary-600">{segment.name}</span>
+                  <span className="text-sm text-secondary-600 dark:text-gray-300">{segment.name}</span>
                 </div>
-                <span className="text-sm font-medium text-secondary-900">
+                <span className="text-sm font-medium text-secondary-900 dark:text-gray-100">
                   {formatNumber(segment.customers)}
                 </span>
               </div>
@@ -402,12 +402,12 @@ const Analytics = () => {
           transition={{ delay: 0.8 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-secondary-900 mb-6">
-            Top Customers
+          <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-6">
+            {t('analytics.topCustomers')}
           </h3>
           <div className="space-y-3">
             {topCustomers.map((customer, index) => (
-              <div key={customer.id} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
+              <div key={customer.id} className="flex items-center justify-between p-3 bg-secondary-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
                   <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                     <span className="text-xs font-medium text-primary-700">
@@ -415,15 +415,15 @@ const Analytics = () => {
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-secondary-900">{customer.name}</p>
-                    <p className="text-xs text-secondary-500">{customer.tier}</p>
+                    <p className="font-medium text-secondary-900 dark:text-gray-100">{customer.name}</p>
+                    <p className="text-xs text-secondary-500 dark:text-gray-400">{customer.tier}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-primary-600">
                     {formatNumber(customer.points)}
                   </p>
-                  <p className="text-xs text-secondary-500">
+                  <p className="text-xs text-secondary-500 dark:text-gray-400">
                     {formatCurrency(customer.spent)}
                   </p>
                 </div>

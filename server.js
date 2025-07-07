@@ -8,10 +8,12 @@ const cookieParser = require('cookie-parser');
 // const compression = require('compression');
 // const rateLimit = require('express-rate-limit');
 
-// Import routes (create these files later)
+// Import routes
 const merchantRoutes = require('./routes/merchant.route');
 const customerRoutes = require('./routes/customer.route');
 const rewardRoutes = require('./routes/reward.route');
+const analyticsRoutes = require('./routes/analytics.route');
+const subscriptionRoutes = require('./routes/subscription.route');
 const webhookRoute = require('./routes/webhook.route');
 
 const app = express();
@@ -19,19 +21,23 @@ const app = express();
 // Security Middleware
 // app.use(helmet()); // Security headers
 app.use(cors({
-    // origin: function (origin, callback) {
-    //     // Allow requests from specified origins or no origin (e.g., Postman)
-    //     console.log('CORS origins:', process.env.CORS_ORIGINS.split(','));
-    //     if (process.env.CORS_ORIGINS.split(',').includes(origin)) {
-    //         callback(null, true);
-    //     } else {
-    //         console.log('CORS error for origin:', origin);
-    //         callback(new Error('Not allowed by CORS'));
-    //     }
-    // },
-    methods: process.env.CORS_METHODS,
-    allowedHeaders: process.env.CORS_ALLOWED_HEADERS.split(','),
-    credentials: process.env.CORS_CREDENTIALS === 'true'
+    origin: function (origin, callback) {
+        // Allow requests from specified origins or no origin (e.g., Postman)
+        const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
+        
+        // Allow requests with no origin (mobile apps, postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('CORS error for origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
 }));
 
 // Rate limiting
@@ -53,6 +59,8 @@ const API_PREFIX = process.env.API_PREFIX;
 app.use(`${API_PREFIX}/merchant`, merchantRoutes);
 app.use(`${API_PREFIX}/customer`, customerRoutes);
 app.use(`${API_PREFIX}/reward`, rewardRoutes);
+app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
+app.use(`${API_PREFIX}/subscription`, subscriptionRoutes);
 
 // // Health check endpoint
 // app.get('/health', (req, res) => {

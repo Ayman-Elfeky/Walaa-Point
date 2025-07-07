@@ -66,6 +66,29 @@ const loginMerchant = async (req, res) => {
     }
 }
 
+const logoutMerchant = async (req, res) => {
+    try {
+        // Clear the JWT cookie
+        res.clearCookie('jwt', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Logged out successfully'
+        });
+    } catch (error) {
+        console.error('Error during logout:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong during logout'
+        });
+    }
+};
+
 const getLoyaltySettings = async (req, res) => {
     try {
         const merchant = req.merchant; // Get the merchant from the request object
@@ -177,42 +200,45 @@ const getMerchantDashboard = async (req, res) => {
             return res.status(404).json({ message: 'Merchant not found' })
         }
 
-        const isTokenExpired = new Date() > new Date(merchant.accessTokenExpiresAt);
-        if (isTokenExpired) {
-            console.log("\nThe Token is Expired\n");
-            // Here you would typically refresh the token using the refresh token
-            const newTokens = await refreshToken(merchant);
+        // Get basic dashboard metrics from our local database
+        const Customer = require('../models/customer.model');
+        const Transaction = require('../models/transaction.model');
+        const Reward = require('../models/reward.model');
 
-            // update merchant with new tokens
-            merchant.accessToken = newTokens.accessToken;
-            merchant.refreshToken = newTokens.refreshToken;
-            merchant.accessTokenExpiresAt = newTokens.accessTokenExpiresAt;
-            merchant.refreshTokenExpiresAt = newTokens.refreshTokenExpiresAt;
-
-            // Save the updated merchant
-            await merchant.save();
-        }
-
-        const [customersData, ordersData] = await Promise.all([
-            getCustomers(merchant.accessToken),
-            getOrders(merchant.accessToken)
+        const [
+            totalCustomers,
+            activeCustomers,
+            totalTransactions,
+            totalRewards
+        ] = await Promise.all([
+            Customer.countDocuments({ merchant: merchant._id }),
+            Customer.countDocuments({ merchant: merchant._id }), // For now, treat all as active
+            Transaction.countDocuments({ merchant: merchant._id }),
+            Reward.countDocuments({ merchant: merchant._id })
         ]);
 
-        console.log('\nCustomers Data: ', customersData, '\nLoyality Data: ', loyalityData, '\nOrders Data: ', ordersData, '\n');
+        // Get total points from transactions
+        const pointsData = await Transaction.aggregate([
+            { $match: { merchant: merchant._id } },
+            { $group: { _id: null, totalPoints: { $sum: "$points" } } }
+        ]);
 
-        const lengthOfCustomers = customersData.length;
-        const lengthOfOrders = ordersData.length;
+        const totalPoints = pointsData.length > 0 ? pointsData[0].totalPoints : 0;
+
         res.status(200).json({
             success: true,
-            message: 'Merchant Profile Fetched Successfully',
-            customers: customersData,
-            orders: ordersData,
-            customersDataLength: lengthOfCustomers,
-            ordersDataLength: lengthOfOrders
+            message: 'Dashboard data fetched successfully',
+            totalCustomers,
+            activeCustomers,
+            totalTransactions,
+            totalRewards,
+            totalPoints,
+            customersDataLength: totalCustomers,
+            transactionsDataLength: totalTransactions
         });
 
     } catch (error) {
-        console.error('Error fetching merchant profile:', error.message);
+        console.error('Error fetching merchant dashboard:', error.message);
         res.status(500).json({ message: 'Something went wrong' });
     }
 }
@@ -364,8 +390,178 @@ const updateIdentityAndDesignSettings = async (req, res) => {
     }
 };
 
+/**
+ * Verify authentication - simple endpoint for auth checks
+ * GET /api/merchant/verify-auth
+ */
+const verifyAuth = async (req, res) => {
+    try {
+        const merchant = req.merchant; // From protect middleware
+        
+        res.status(200).json({
+            success: true,
+            message: 'Authentication verified',
+            merchant: {
+                _id: merchant._id,
+                name: merchant.name,
+                email: merchant.email,
+                storeName: merchant.storeName
+            }
+        });
+    } catch (error) {
+        console.error('Auth verification error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Authentication verification failed'
+        });
+    }
+};
+
+/**
+ * Get current subscription (mock implementation)
+ * GET /api/subscription/current
+ */
+const getCurrentSubscription = async (req, res) => {
+    try {
+        // Mock subscription data for now
+        const mockSubscription = {
+            plan: 'pro',
+            status: 'active',
+            price: 49.99,
+            nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            features: ['unlimited_customers', 'advanced_analytics', 'email_marketing']
+        };
+
+        const mockUsage = {
+            customers: { used: 1250, limit: 5000 },
+            apiCalls: { used: 8500, limit: 10000 },
+            emails: { used: 320, limit: 1000 },
+            rewards: { used: 12, limit: 50 },
+            storage: { used: 2.1, limit: 10 }
+        };
+
+        const mockPlans = [
+            {
+                id: 'starter',
+                name: 'Starter',
+                price: 19.99,
+                description: 'Perfect for small businesses',
+                features: [
+                    { name: 'Up to 1,000 customers', included: true },
+                    { name: '5,000 API calls/month', included: true },
+                    { name: '500 emails/month', included: true },
+                    { name: 'Basic analytics', included: true },
+                    { name: 'Advanced analytics', included: false }
+                ]
+            },
+            {
+                id: 'pro',
+                name: 'Professional',
+                price: 49.99,
+                description: 'For growing businesses',
+                popular: true,
+                features: [
+                    { name: 'Up to 5,000 customers', included: true },
+                    { name: '10,000 API calls/month', included: true },
+                    { name: '1,000 emails/month', included: true },
+                    { name: 'Advanced analytics', included: true },
+                    { name: 'Priority support', included: true }
+                ]
+            },
+            {
+                id: 'enterprise',
+                name: 'Enterprise',
+                price: 99.99,
+                description: 'For large organizations',
+                features: [
+                    { name: 'Unlimited customers', included: true },
+                    { name: 'Unlimited API calls', included: true },
+                    { name: 'Unlimited emails', included: true },
+                    { name: 'Custom integrations', included: true },
+                    { name: 'Dedicated support', included: true }
+                ]
+            }
+        ];
+
+        const mockBillingHistory = [
+            { id: 1, date: new Date('2024-01-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2024-001' },
+            { id: 2, date: new Date('2023-12-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2023-012' },
+            { id: 3, date: new Date('2023-11-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2023-011' }
+        ];
+
+        res.status(200).json({
+            success: true,
+            subscription: mockSubscription,
+            usage: mockUsage,
+            plans: mockPlans,
+            billingHistory: mockBillingHistory
+        });
+    } catch (error) {
+        console.error('Error getting subscription:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong'
+        });
+    }
+};
+
+/**
+ * Get billing history (mock implementation)
+ * GET /api/subscription/billing-history
+ */
+const getBillingHistory = async (req, res) => {
+    try {
+        const mockBillingHistory = [
+            { id: 1, date: new Date('2024-01-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2024-001' },
+            { id: 2, date: new Date('2023-12-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2023-012' },
+            { id: 3, date: new Date('2023-11-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2023-011' },
+            { id: 4, date: new Date('2023-10-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2023-010' },
+            { id: 5, date: new Date('2023-09-01'), plan: 'Professional', amount: 49.99, status: 'paid', invoice: 'INV-2023-009' }
+        ];
+
+        res.status(200).json({
+            success: true,
+            billingHistory: mockBillingHistory
+        });
+    } catch (error) {
+        console.error('Error getting billing history:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong'
+        });
+    }
+};
+
+/**
+ * Get usage statistics (mock implementation)
+ * GET /api/subscription/usage
+ */
+const getUsageStatistics = async (req, res) => {
+    try {
+        const mockUsage = {
+            customers: { used: 1250, limit: 5000 },
+            apiCalls: { used: 8500, limit: 10000 },
+            emails: { used: 320, limit: 1000 },
+            rewards: { used: 12, limit: 50 },
+            storage: { used: 2.1, limit: 10 }
+        };
+
+        res.status(200).json({
+            success: true,
+            usage: mockUsage
+        });
+    } catch (error) {
+        console.error('Error getting usage statistics:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong'
+        });
+    }
+};
+
 module.exports = {
     loginMerchant,
+    logoutMerchant,
     getLoyaltySettings,
     updateLoyaltySettings,
     // updateMerchantProfile,
@@ -374,5 +570,9 @@ module.exports = {
     getMerchantDashboard,
     sendMail,
     getIdentityAndDesignSettings,
-    updateIdentityAndDesignSettings
+    updateIdentityAndDesignSettings,
+    verifyAuth,
+    getCurrentSubscription,
+    getBillingHistory,
+    getUsageStatistics
 };

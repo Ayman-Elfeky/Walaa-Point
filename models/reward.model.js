@@ -7,38 +7,121 @@ const rewardSchema = new mongoose.Schema({
         required: true
     },
 
-    enabled: {
-        type: Boolean,
-        required: true,
-        default: false
+    name: {
+        type: String,
+        required: true
     },
 
-    description: String,
+    nameEn: {
+        type: String
+    },
+
+    description: {
+        type: String,
+        required: true
+    },
+
+    descriptionEn: {
+        type: String
+    },
 
     pointsRequired: {
         type: Number,
-        default: 150,
-        required: true
+        required: true,
+        default: 100
     },
     
     rewardType: {
         type: String,
-        enum: ['discountOrderPrice', 'discountShipping', 'discountOrderPercent', 'cashback', 'freeProduct'],
-        default: 'discountOrderPrice'
+        enum: ['percentage', 'fixed', 'shipping', 'cashback', 'product'],
+        required: true,
+        default: 'percentage'
     },
 
     rewardValue: {
         type: Number,
-        default: 10,
-        required: true // e.g., 10 => 10% off or 10 EGP
+        required: true,
+        default: 10 // e.g., 10 => 10% off or 10 SAR discount
     },
 
-    expiresAt: Date,
+    minOrderValue: {
+        type: Number,
+        default: 0
+    },
 
-    createdAt: {
+    maxUsagePerCustomer: {
+        type: Number,
+        default: 1
+    },
+
+    maxTotalUsage: {
+        type: Number,
+        default: 1000
+    },
+
+    currentUsage: {
+        type: Number,
+        default: 0
+    },
+
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+
+    validFrom: {
         type: Date,
         default: Date.now
+    },
+
+    validUntil: {
+        type: Date
+    },
+
+    category: {
+        type: String,
+        default: 'general'
+    },
+
+    terms: [{
+        type: String
+    }],
+
+    termsEn: [{
+        type: String
+    }],
+
+    // Legacy field for backward compatibility
+    enabled: {
+        type: Boolean,
+        default: function() {
+            return this.isActive;
+        }
+    },
+
+    // Legacy field names for backward compatibility
+    expiresAt: {
+        type: Date,
+        get: function() {
+            return this.validUntil;
+        },
+        set: function(value) {
+            this.validUntil = value;
+        }
     }
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true, getters: true },
+    toObject: { virtuals: true, getters: true }
+});
+
+// Virtual for compatibility
+rewardSchema.virtual('type').get(function() {
+    return this.rewardType;
+});
+
+rewardSchema.virtual('value').get(function() {
+    return this.rewardValue;
 });
 
 const Reward = mongoose.model('Reward', rewardSchema);

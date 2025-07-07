@@ -1,0 +1,283 @@
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Gift, 
+  BarChart3, 
+  Settings, 
+  Bell, 
+  CreditCard,
+  Menu,
+  X,
+  LogOut,
+  Globe
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
+import { cn } from '../../utils';
+import toast from 'react-hot-toast';
+
+const DashboardLayout = ({ children }) => {
+  const { t, i18n } = useTranslation();
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+
+  const navigation = [
+    {
+      name: t('navigation.dashboard'),
+      href: '/dashboard',
+      icon: LayoutDashboard,
+      current: location.pathname === '/dashboard'
+    },
+    {
+      name: t('navigation.customers'),
+      href: '/customers',
+      icon: Users,
+      current: location.pathname === '/customers'
+    },
+    {
+      name: t('navigation.rewards'),
+      href: '/rewards',
+      icon: Gift,
+      current: location.pathname === '/rewards'
+    },
+    {
+      name: t('navigation.analytics'),
+      href: '/analytics',
+      icon: BarChart3,
+      current: location.pathname === '/analytics'
+    },
+    {
+      name: t('navigation.subscription'),
+      href: '/subscription',
+      icon: CreditCard,
+      current: location.pathname === '/subscription'
+    },
+    {
+      name: t('navigation.settings'),
+      href: '/settings',
+      icon: Settings,
+      current: location.pathname === '/settings'
+    }
+  ];
+
+  const handleNavigation = (href) => {
+    navigate(href);
+    setSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success(t('auth.signOutSuccess'));
+  };
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'ar' ? 'en' : 'ar';
+    i18n.changeLanguage(newLang);
+    toast.success(t('language.changeLanguage'));
+  };
+
+  return (
+    <div className={cn(
+      "min-h-screen bg-secondary-50",
+      i18n.language === 'ar' ? 'rtl' : 'ltr'
+    )}>
+      {/* Mobile Sidebar Backdrop */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 z-50 w-64 bg-white shadow-xl lg:fixed lg:inset-y-0',
+          i18n.language === 'ar' ? 'right-0' : 'left-0',
+          sidebarOpen ? 'translate-x-0' : (i18n.language === 'ar' ? 'translate-x-full' : '-translate-x-full'),
+          'lg:translate-x-0 transition-transform duration-300 ease-in-out'
+        )}
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-secondary-100">
+            <div className={cn(
+              'flex items-center',
+              i18n.language === 'ar' ? 'space-x-reverse space-x-3' : 'space-x-3'
+            )}>
+              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center">
+                  <div className="w-2 h-2 bg-primary-600 rounded"></div>
+                </div>
+              </div>
+              <h1 className="text-xl font-bold text-secondary-900">Loyalfy</h1>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden text-secondary-400 hover:text-secondary-600"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavigation(item.href)}
+                  className={cn(
+                    'sidebar-item w-full group',
+                    item.current && 'active'
+                  )}
+                >
+                  <Icon className={cn(
+                    'h-5 w-5 transition-colors',
+                    i18n.language === 'ar' ? 'ml-3' : 'mr-3'
+                  )} />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* User Profile */}
+          <div className="border-t border-secondary-100 p-4">
+            <div className={cn(
+              'flex items-center mb-4',
+              i18n.language === 'ar' ? 'space-x-reverse space-x-3' : 'space-x-3'
+            )}>
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-primary-700">
+                  {user?.name?.charAt(0) || 'M'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-secondary-900 truncate">
+                  {user?.name || 'Merchant'}
+                </p>
+                <p className="text-xs text-secondary-500 truncate">
+                  {user?.email || 'merchant@example.com'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-3 py-2 text-sm text-error-600 hover:bg-error-50 rounded-lg transition-colors"
+            >
+              <LogOut className={cn(
+                'h-4 w-4',
+                i18n.language === 'ar' ? 'ml-2' : 'mr-2'
+              )} />
+              {t('navigation.logout')}
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className={cn(
+        "min-h-screen transition-all duration-300 ease-in-out",
+        i18n.language === 'ar' ? 'lg:mr-64' : 'lg:ml-64'
+      )}>
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-secondary-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-6 py-4">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden text-secondary-400 hover:text-secondary-600"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+
+            {/* Search & Actions */}
+            <div className={cn(
+              'flex items-center',
+              i18n.language === 'ar' ? 'space-x-reverse space-x-4' : 'space-x-4'
+            )}>
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLanguage}
+                className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-lg transition-colors"
+              >
+                <Globe className="h-5 w-5" />
+              </button>
+
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => setNotificationOpen(!notificationOpen)}
+                  className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-lg transition-colors relative"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-error-500 rounded-full"></span>
+                </button>
+
+                {/* Notification Dropdown */}
+                <AnimatePresence>
+                  {notificationOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-secondary-200 z-50"
+                    >
+                      <div className="p-4 border-b border-secondary-100">
+                        <h3 className="text-sm font-medium text-secondary-900">
+                          {t('navigation.notifications')}
+                        </h3>
+                      </div>
+                      <div className="p-4">
+                        <p className="text-sm text-secondary-500 text-center">
+                          {t('notifications.noNotifications')}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* User Menu */}
+              <div className={cn(
+                'flex items-center',
+                i18n.language === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'
+              )}>
+                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-medium text-primary-700">
+                    {user?.name?.charAt(0) || 'M'}
+                  </span>
+                </div>
+                <span className="hidden md:block text-sm font-medium text-secondary-900">
+                  {user?.name || 'Merchant'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto h-full">
+            {children}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default DashboardLayout; 

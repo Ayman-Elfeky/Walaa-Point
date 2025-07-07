@@ -1,23 +1,15 @@
 const mongoose = require('mongoose');
 
 const notificationSettingsSchema = new mongoose.Schema({
-    earnNewPoints: {
-        type: Boolean,
-        default: true
-    },
-    earnNewCoupon: {
-        type: Boolean,
-        default: true
-    },
-    earnNewCouponForShare: {
-        type: Boolean,
-        default: true
-    },
-    birthday: {
-        type: Boolean,
-        default: true
-    },
-})
+    earnNewPoints: { type: Boolean, default: true },
+    earnNewCoupon: { type: Boolean, default: true },
+    earnNewCouponForShare: { type: Boolean, default: true },
+    birthday: { type: Boolean, default: true }
+});
+
+
+
+
 
 // Schema for individual event-based point rules
 const eventRuleSchema = new mongoose.Schema({

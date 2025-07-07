@@ -3,6 +3,7 @@ const router = express.Router();
 const protect = require('../middlewares/protect');
 const {
     loginMerchant,
+    logoutMerchant,
     getMerchantDashboard,
     // updateMerchantProfile,
     getLoyaltySettings,
@@ -10,7 +11,8 @@ const {
     getRewardSettings,
     updateRewardSettings,
     getIdentityAndDesignSettings,
-    updateIdentityAndDesignSettings
+    updateIdentityAndDesignSettings,
+    verifyAuth
 } = require('../controllers/merchant.controller');
 
 const {
@@ -21,6 +23,8 @@ const {
 
 // Auth
 router.post('/login', loginMerchant);
+router.post('/logout', logoutMerchant);
+router.get('/verify-auth', protect, verifyAuth);
 
 // Profile
 router.get('/dashboard', protect, getMerchantDashboard);

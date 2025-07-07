@@ -21,6 +21,7 @@ import {
 import { rewardService } from '../services/rewardService';
 import { formatNumber, formatCurrency, formatDate } from '../utils';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import Modal from '../components/common/Modal';
 import toast from 'react-hot-toast';
 
 const Rewards = () => {
@@ -30,6 +31,15 @@ const Rewards = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [rewardForm, setRewardForm] = useState({
+    name: '',
+    description: '',
+    type: 'percentage_discount',
+    value: '',
+    pointsRequired: '',
+    expiresAt: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchRewards();
@@ -43,7 +53,7 @@ const Rewards = () => {
     } catch (error) {
       console.error('Error fetching rewards:', error);
       setRewards([]);
-      toast.error('Failed to fetch rewards');
+      toast.error(t('rewards.failedToFetchRewards'));
     } finally {
       setLoading(false);
     }
@@ -98,9 +108,9 @@ const Rewards = () => {
       case 'cashback':
         return formatCurrency(value);
       case 'free_shipping':
-        return 'Free';
+        return t('rewards.free');
       case 'free_product':
-        return 'Free Item';
+        return t('rewards.freeItem');
       default:
         return value;
     }
@@ -110,10 +120,33 @@ const Rewards = () => {
     try {
       const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
       await rewardService.updateReward(rewardId, { status: newStatus });
-      toast.success('Reward status updated');
+      toast.success(t('rewards.rewardStatusUpdated'));
       fetchRewards();
     } catch (error) {
-      toast.error('Failed to update reward status');
+      toast.error(t('rewards.failedToUpdateRewardStatus'));
+    }
+  };
+
+  const handleAddReward = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      await rewardService.createReward(rewardForm);
+      toast.success(t('rewards.rewardCreated'));
+      setShowAddModal(false);
+      setRewardForm({
+        name: '',
+        description: '',
+        type: 'percentage_discount',
+        value: '',
+        pointsRequired: '',
+        expiresAt: ''
+      });
+      fetchRewards();
+    } catch (error) {
+      toast.error(t('rewards.createRewardError') || 'Failed to create reward');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -297,13 +330,13 @@ const Rewards = () => {
               {/* Reward Value & Points */}
               <div className="bg-secondary-50 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-secondary-700">Reward Value</span>
+                  <span className="text-sm font-medium text-secondary-700">{t('rewards.rewardValueLabel')}</span>
                   <span className="text-lg font-bold text-primary-600">
                     {formatRewardValue(reward.type, reward.value)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-secondary-700">Points Required</span>
+                  <span className="text-sm font-medium text-secondary-700">{t('rewards.pointsRequired')}</span>
                   <span className="text-lg font-bold text-secondary-900">
                     {formatNumber(reward.pointsRequired)}
                   </span>
@@ -313,7 +346,7 @@ const Rewards = () => {
               {/* Usage Stats */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-secondary-600">Usage</span>
+                  <span className="text-sm text-secondary-600">{t('rewards.usage')}</span>
                   <span className="text-sm font-medium text-secondary-900">
                     {formatNumber(reward.usageCount)} / {formatNumber(reward.maxUsage)}
                   </span>
@@ -330,7 +363,7 @@ const Rewards = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-sm text-secondary-600">
                   <Calendar className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                  Valid until {formatDate(reward.validUntil, 'MMM dd, yyyy')}
+                  {t('rewards.validUntil')} {formatDate(reward.validUntil, 'MMM dd, yyyy')}
                 </div>
               </div>
 
@@ -342,7 +375,7 @@ const Rewards = () => {
                     reward.status === 'active' ? 'btn-outline' : 'btn-primary'
                   }`}
                 >
-                  {reward.status === 'active' ? 'Disable' : 'Activate'}
+                  {reward.status === 'active' ? t('rewards.disable') : t('rewards.activate')}
                 </button>
                 <button className="btn btn-outline text-xs py-2">
                   <Edit className="h-4 w-4" />
@@ -361,20 +394,129 @@ const Rewards = () => {
         <div className="text-center py-12">
           <Gift className="h-16 w-16 text-secondary-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-secondary-900 mb-2">
-            No rewards found
+            {t('rewards.noRewardsFoundEmpty')}
           </h3>
           <p className="text-secondary-500 mb-6">
-            Create your first reward to start engaging customers.
+            {t('rewards.createFirstRewardDesc')}
           </p>
           <button
             onClick={() => setShowAddModal(true)}
             className="btn btn-primary"
           >
             <Plus className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" />
-            Create First Reward
+            {t('rewards.createFirstRewardBtn')}
           </button>
         </div>
       )}
+
+      {/* Add Reward Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title={t('rewards.createReward')}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleAddReward} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('common.name')}
+            </label>
+            <input
+              type="text"
+              required
+              className="input"
+              value={rewardForm.name}
+              onChange={(e) => setRewardForm(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('common.description')}
+            </label>
+            <textarea
+              required
+              className="input"
+              rows="3"
+              value={rewardForm.description}
+              onChange={(e) => setRewardForm(prev => ({ ...prev, description: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('rewards.rewardType')}
+            </label>
+            <select
+              className="input"
+              value={rewardForm.type}
+              onChange={(e) => setRewardForm(prev => ({ ...prev, type: e.target.value }))}
+            >
+              <option value="percentage_discount">{t('rewards.percentage')}</option>
+              <option value="fixed_discount">{t('rewards.fixed')}</option>
+              <option value="free_shipping">{t('rewards.shipping')}</option>
+              <option value="free_product">{t('rewards.product')}</option>
+              <option value="cashback">{t('rewards.cashback')}</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('rewards.rewardValue')}
+            </label>
+            <input
+              type="number"
+              required
+              className="input"
+              value={rewardForm.value}
+              onChange={(e) => setRewardForm(prev => ({ ...prev, value: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('rewards.pointsRequired')}
+            </label>
+            <input
+              type="number"
+              required
+              className="input"
+              value={rewardForm.pointsRequired}
+              onChange={(e) => setRewardForm(prev => ({ ...prev, pointsRequired: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('rewards.expiresAt')}
+            </label>
+            <input
+              type="date"
+              className="input"
+              value={rewardForm.expiresAt}
+              onChange={(e) => setRewardForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(false)}
+              className="btn btn-outline"
+              disabled={submitting}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={submitting}
+            >
+              {submitting ? t('common.loading') : t('rewards.createReward')}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

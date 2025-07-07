@@ -14,7 +14,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Target,
-  Percent
+  Percent,
+  UserCheck
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -70,7 +71,7 @@ const Analytics = () => {
         customerSegments: [],
         topCustomers: []
       });
-      toast.error('Failed to fetch analytics');
+      toast.error(t('analytics.failedToFetchAnalytics'));
     } finally {
       setLoading(false);
     }
@@ -90,50 +91,50 @@ const Analytics = () => {
 
   const overviewStats = [
     {
-      name: 'Total Customers',
+      name: t('analytics.totalCustomersCard'),
       value: formatNumber(overview.totalCustomers || 0),
-      change: calculatePercentageChange(overview.totalCustomers || 0, overview.previousPeriod?.totalCustomers || 0),
+      change: overview.customerGrowth || 0,
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100'
     },
     {
-      name: 'Active Customers',
+      name: t('analytics.activeCustomersCard'),
       value: formatNumber(overview.activeCustomers || 0),
-      change: overview.customerGrowth || 0,
-      icon: Target,
+      change: overview.activeGrowth || 0,
+      icon: UserCheck,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
-      name: 'Points Issued',
-      value: formatNumber(overview.totalPointsIssued || 0),
-      change: calculatePercentageChange(overview.totalPointsIssued || 0, overview.previousPeriod?.totalPointsIssued || 0),
-      icon: Coins,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100'
-    },
-    {
-      name: 'Points Redeemed',
-      value: formatNumber(overview.totalPointsRedeemed || 0),
-      change: calculatePercentageChange(overview.totalPointsRedeemed || 0, overview.previousPeriod?.totalPointsRedeemed || 0),
-      icon: Gift,
+      name: t('analytics.pointsIssuedCard'),
+      value: formatNumber(overview.pointsIssued || 0),
+      change: overview.pointsGrowth || 0,
+      icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
     },
     {
-      name: 'Conversion Rate',
-      value: formatPercentage((overview.conversionRate || 0) / 100),
+      name: t('analytics.pointsRedeemedCard'),
+      value: formatNumber(overview.pointsRedeemed || 0),
       change: overview.redemptionGrowth || 0,
-      icon: Percent,
-      color: 'text-pink-600',
-      bgColor: 'bg-pink-100'
+      icon: Gift,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100'
     },
     {
-      name: 'Avg Points/Customer',
+      name: t('analytics.conversionRateCard'),
+      value: formatPercentage((overview.conversionRate || 0) / 100),
+      change: overview.conversionGrowth || 0,
+      icon: Target,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100'
+    },
+    {
+      name: t('analytics.avgPointsPerCustomerCard'),
       value: formatNumber(overview.avgPointsPerCustomer || 0),
-      change: 12.4,
-      icon: TrendingUp,
+      change: overview.avgPointsGrowth || 0,
+      icon: BarChart3,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100'
     }

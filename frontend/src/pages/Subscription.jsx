@@ -55,7 +55,7 @@ const Subscription = () => {
       setSubscription({});
       setBillingHistory([]);
       setUsage({});
-      toast.error('Failed to fetch subscription data');
+      toast.error(t('subscription.failedToFetchSubscriptionData'));
     } finally {
       setLoading(false);
     }
@@ -64,52 +64,52 @@ const Subscription = () => {
   const plans = [
     {
       id: 'basic',
-      name: 'Basic',
+      name: t('subscription.basicPlanName'),
       price: 49,
-      description: 'Perfect for small businesses starting their loyalty journey',
+      description: t('subscription.basicPlanDesc'),
       features: [
-        { name: 'Up to 500 customers', included: true },
-        { name: 'Up to 5 rewards', included: true },
-        { name: 'Basic analytics', included: true },
-        { name: 'Email support', included: true },
-        { name: 'Phone support', included: false },
-        { name: 'Custom branding', included: false },
-        { name: 'API access', included: false },
-        { name: 'Multi-location', included: false }
+        { name: t('subscription.upTo500Customers'), included: true },
+        { name: t('subscription.upTo5Rewards'), included: true },
+        { name: t('subscription.basicAnalytics'), included: true },
+        { name: t('subscription.emailSupport'), included: true },
+        { name: t('subscription.phoneSupport'), included: false },
+        { name: t('subscription.customBranding'), included: false },
+        { name: t('subscription.apiAccess'), included: false },
+        { name: t('subscription.multiLocation'), included: false }
       ],
       popular: false
     },
     {
       id: 'standard',
-      name: 'Standard',
+      name: t('subscription.standardPlanName'),
       price: 99,
-      description: 'Great for growing businesses with more customers',
+      description: t('subscription.standardPlanDesc'),
       features: [
-        { name: 'Up to 2,000 customers', included: true },
-        { name: 'Up to 20 rewards', included: true },
-        { name: 'Advanced analytics', included: true },
-        { name: 'Email support', included: true },
-        { name: 'Phone support', included: true },
-        { name: 'Custom branding', included: false },
-        { name: 'API access', included: false },
-        { name: 'Multi-location', included: false }
+        { name: t('subscription.upTo2000Customers'), included: true },
+        { name: t('subscription.upTo20Rewards'), included: true },
+        { name: t('subscription.advancedAnalytics'), included: true },
+        { name: t('subscription.emailSupport'), included: true },
+        { name: t('subscription.phoneSupport'), included: true },
+        { name: t('subscription.customBranding'), included: false },
+        { name: t('subscription.apiAccess'), included: false },
+        { name: t('subscription.multiLocation'), included: false }
       ],
       popular: false
     },
     {
       id: 'premium',
-      name: 'Premium',
+      name: t('subscription.premiumPlanName'),
       price: 199,
-      description: 'Best for established businesses with high customer volume',
+      description: t('subscription.premiumPlanDesc'),
       features: [
-        { name: 'Up to 5,000 customers', included: true },
-        { name: 'Up to 50 rewards', included: true },
-        { name: 'Advanced analytics', included: true },
-        { name: 'Email support', included: true },
-        { name: 'Phone support', included: true },
-        { name: 'Custom branding', included: true },
-        { name: 'API access', included: true },
-        { name: 'Multi-location', included: true }
+        { name: t('subscription.upTo5000Customers'), included: true },
+        { name: t('subscription.upTo50Rewards'), included: true },
+        { name: t('subscription.advancedAnalytics'), included: true },
+        { name: t('subscription.emailSupport'), included: true },
+        { name: t('subscription.phoneSupport'), included: true },
+        { name: t('subscription.customBranding'), included: true },
+        { name: t('subscription.apiAccess'), included: true },
+        { name: t('subscription.multiLocation'), included: true }
       ],
       popular: true
     }
@@ -119,10 +119,10 @@ const Subscription = () => {
     try {
       setLoading(true);
       await subscriptionService.upgradePlan(planId);
-      toast.success('Plan upgraded successfully!');
+      toast.success(t('subscription.planUpgradeSuccess'));
       fetchSubscriptionData();
     } catch (error) {
-      toast.error('Failed to upgrade plan');
+      toast.error(t('subscription.planUpgradeFailed'));
     } finally {
       setLoading(false);
     }
@@ -177,10 +177,10 @@ const Subscription = () => {
               <h2 className="text-xl font-semibold text-secondary-900 dark:text-gray-100">
                 {subscription?.plan ? 
                   subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) 
-                  : 'Loading...'} {t('subscription.currentPlan')}
+                  : t('common.loading')} {t('subscription.currentPlan')}
               </h2>
               <p className="text-secondary-600 dark:text-gray-300">
-                {t('subscription.nextBilling')}: {subscription?.nextBilling ? formatDate(subscription.nextBilling) : 'Loading...'}
+                {t('subscription.nextBilling')}: {subscription?.nextBilling ? formatDate(subscription.nextBilling) : t('common.loading')}
               </p>
             </div>
           </div>
@@ -193,8 +193,8 @@ const Subscription = () => {
               subscription?.status === 'active' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'
             }`}>
               {subscription?.status ? 
-                subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)
-                : 'Loading'}
+                t(`common.${subscription.status}`)
+                : t('common.loading').replace('...', '')}
             </span>
           </div>
         </div>

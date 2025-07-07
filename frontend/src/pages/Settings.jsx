@@ -21,7 +21,17 @@ import {
   Languages,
   Volume2,
   VolumeX,
-  Crown
+  Crown,
+  Gift,
+  Percent,
+  Truck,
+  DollarSign,
+  Package,
+  Plus,
+  Trash2,
+  Edit,
+  Check,
+  X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../utils';
@@ -58,7 +68,51 @@ const Settings = () => {
     tierBronze: 0,
     tierSilver: 1000,
     tierGold: 5000,
-    tierPlatinum: 15000
+    tierPlatinum: 15000,
+    // Redemption Options
+    redemptionOptions: {
+      percentageDiscount: {
+        enabled: true,
+        value: 10, // 10%
+        pointsRequired: 100,
+        minOrderValue: 50,
+        maxUsagePerCustomer: 3
+      },
+      fixedDiscount: {
+        enabled: true,
+        value: 25, // 25 SAR
+        pointsRequired: 250,
+        minOrderValue: 100,
+        maxUsagePerCustomer: 2
+      },
+      freeShipping: {
+        enabled: true,
+        pointsRequired: 50,
+        minOrderValue: 30,
+        maxUsagePerCustomer: 5
+      },
+      cashback: {
+        enabled: false,
+        value: 15, // 15 SAR
+        pointsRequired: 200,
+        maxUsagePerCustomer: 1
+      },
+      productRewards: {
+        enabled: false,
+        pointsRequired: 500,
+        maxUsagePerCustomer: 1
+      },
+      giftCards: {
+        enabled: false,
+        value: 50, // 50 SAR
+        pointsRequired: 500,
+        maxUsagePerCustomer: 2
+      },
+      customRules: {
+        enabled: false,
+        rules: []
+      }
+    }
   });
 
   const [notifications, setNotifications] = useState({
@@ -332,6 +386,618 @@ const Settings = () => {
               value={loyaltySettings.tierPlatinum}
               onChange={(e) => setLoyaltySettings(prev => ({ ...prev, tierPlatinum: parseInt(e.target.value) }))}
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Redemption Options Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-2">{t('settings.redemptionOptions')}</h3>
+        <p className="text-sm text-secondary-600 dark:text-gray-400 mb-6">{t('settings.redemptionOptionsDesc')}</p>
+        
+        <div className="space-y-6">
+          {/* Percentage Discount */}
+          <div className="p-6 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Percent className="h-6 w-6 text-blue-500 mr-3 rtl:mr-0 rtl:ml-3" />
+                <div>
+                  <h4 className="text-lg font-medium text-secondary-900 dark:text-gray-100">{t('settings.percentageDiscountLabel')}</h4>
+                  <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.percentageDiscountDesc')}</p>
+                </div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={loyaltySettings.redemptionOptions.percentageDiscount.enabled}
+                  onChange={(e) => setLoyaltySettings(prev => ({
+                    ...prev,
+                    redemptionOptions: {
+                      ...prev.redemptionOptions,
+                      percentageDiscount: {
+                        ...prev.redemptionOptions.percentageDiscount,
+                        enabled: e.target.checked
+                      }
+                    }
+                  }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            {loyaltySettings.redemptionOptions.percentageDiscount.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.discountValue')} (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.percentageDiscount.value}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        percentageDiscount: {
+                          ...prev.redemptionOptions.percentageDiscount,
+                          value: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.pointsRequired')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.percentageDiscount.pointsRequired}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        percentageDiscount: {
+                          ...prev.redemptionOptions.percentageDiscount,
+                          pointsRequired: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.minOrderValue')}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.percentageDiscount.minOrderValue}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        percentageDiscount: {
+                          ...prev.redemptionOptions.percentageDiscount,
+                          minOrderValue: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.maxUsagePerCustomer')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.percentageDiscount.maxUsagePerCustomer}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        percentageDiscount: {
+                          ...prev.redemptionOptions.percentageDiscount,
+                          maxUsagePerCustomer: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Fixed Discount */}
+          <div className="p-6 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <DollarSign className="h-6 w-6 text-green-500 mr-3 rtl:mr-0 rtl:ml-3" />
+                <div>
+                  <h4 className="text-lg font-medium text-secondary-900 dark:text-gray-100">{t('settings.fixedDiscountLabel')}</h4>
+                  <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.fixedDiscountDesc')}</p>
+                </div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={loyaltySettings.redemptionOptions.fixedDiscount.enabled}
+                  onChange={(e) => setLoyaltySettings(prev => ({
+                    ...prev,
+                    redemptionOptions: {
+                      ...prev.redemptionOptions,
+                      fixedDiscount: {
+                        ...prev.redemptionOptions.fixedDiscount,
+                        enabled: e.target.checked
+                      }
+                    }
+                  }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            {loyaltySettings.redemptionOptions.fixedDiscount.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.discountValue')} (SAR)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.fixedDiscount.value}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        fixedDiscount: {
+                          ...prev.redemptionOptions.fixedDiscount,
+                          value: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.pointsRequired')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.fixedDiscount.pointsRequired}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        fixedDiscount: {
+                          ...prev.redemptionOptions.fixedDiscount,
+                          pointsRequired: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.minOrderValue')}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.fixedDiscount.minOrderValue}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        fixedDiscount: {
+                          ...prev.redemptionOptions.fixedDiscount,
+                          minOrderValue: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.maxUsagePerCustomer')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.fixedDiscount.maxUsagePerCustomer}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        fixedDiscount: {
+                          ...prev.redemptionOptions.fixedDiscount,
+                          maxUsagePerCustomer: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Free Shipping */}
+          <div className="p-6 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Truck className="h-6 w-6 text-orange-500 mr-3 rtl:mr-0 rtl:ml-3" />
+                <div>
+                  <h4 className="text-lg font-medium text-secondary-900 dark:text-gray-100">{t('settings.freeShippingRedemption')}</h4>
+                  <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.freeShippingDesc')}</p>
+                </div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={loyaltySettings.redemptionOptions.freeShipping.enabled}
+                  onChange={(e) => setLoyaltySettings(prev => ({
+                    ...prev,
+                    redemptionOptions: {
+                      ...prev.redemptionOptions,
+                      freeShipping: {
+                        ...prev.redemptionOptions.freeShipping,
+                        enabled: e.target.checked
+                      }
+                    }
+                  }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            {loyaltySettings.redemptionOptions.freeShipping.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.pointsRequired')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.freeShipping.pointsRequired}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        freeShipping: {
+                          ...prev.redemptionOptions.freeShipping,
+                          pointsRequired: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.minOrderValue')}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.freeShipping.minOrderValue}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        freeShipping: {
+                          ...prev.redemptionOptions.freeShipping,
+                          minOrderValue: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.maxUsagePerCustomer')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.freeShipping.maxUsagePerCustomer}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        freeShipping: {
+                          ...prev.redemptionOptions.freeShipping,
+                          maxUsagePerCustomer: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Cashback */}
+          <div className="p-6 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <CreditCard className="h-6 w-6 text-purple-500 mr-3 rtl:mr-0 rtl:ml-3" />
+                <div>
+                  <h4 className="text-lg font-medium text-secondary-900 dark:text-gray-100">{t('settings.cashbackRedemption')}</h4>
+                  <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.cashbackDesc')}</p>
+                </div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={loyaltySettings.redemptionOptions.cashback.enabled}
+                  onChange={(e) => setLoyaltySettings(prev => ({
+                    ...prev,
+                    redemptionOptions: {
+                      ...prev.redemptionOptions,
+                      cashback: {
+                        ...prev.redemptionOptions.cashback,
+                        enabled: e.target.checked
+                      }
+                    }
+                  }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            {loyaltySettings.redemptionOptions.cashback.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.cashbackValue')} (SAR)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.cashback.value}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        cashback: {
+                          ...prev.redemptionOptions.cashback,
+                          value: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.pointsRequired')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.cashback.pointsRequired}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        cashback: {
+                          ...prev.redemptionOptions.cashback,
+                          pointsRequired: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.maxUsagePerCustomer')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.cashback.maxUsagePerCustomer}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        cashback: {
+                          ...prev.redemptionOptions.cashback,
+                          maxUsagePerCustomer: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Product Rewards */}
+          <div className="p-6 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Package className="h-6 w-6 text-indigo-500 mr-3 rtl:mr-0 rtl:ml-3" />
+                <div>
+                  <h4 className="text-lg font-medium text-secondary-900 dark:text-gray-100">{t('settings.productRedemption')}</h4>
+                  <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.productRewardsDesc')}</p>
+                </div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={loyaltySettings.redemptionOptions.productRewards.enabled}
+                  onChange={(e) => setLoyaltySettings(prev => ({
+                    ...prev,
+                    redemptionOptions: {
+                      ...prev.redemptionOptions,
+                      productRewards: {
+                        ...prev.redemptionOptions.productRewards,
+                        enabled: e.target.checked
+                      }
+                    }
+                  }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            {loyaltySettings.redemptionOptions.productRewards.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.pointsRequired')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.productRewards.pointsRequired}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        productRewards: {
+                          ...prev.redemptionOptions.productRewards,
+                          pointsRequired: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.maxUsagePerCustomer')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.productRewards.maxUsagePerCustomer}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        productRewards: {
+                          ...prev.redemptionOptions.productRewards,
+                          maxUsagePerCustomer: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Gift Cards */}
+          <div className="p-6 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Gift className="h-6 w-6 text-pink-500 mr-3 rtl:mr-0 rtl:ml-3" />
+                <div>
+                  <h4 className="text-lg font-medium text-secondary-900 dark:text-gray-100">{t('settings.giftCardRedemption')}</h4>
+                  <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.giftCardDesc')}</p>
+                </div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={loyaltySettings.redemptionOptions.giftCards.enabled}
+                  onChange={(e) => setLoyaltySettings(prev => ({
+                    ...prev,
+                    redemptionOptions: {
+                      ...prev.redemptionOptions,
+                      giftCards: {
+                        ...prev.redemptionOptions.giftCards,
+                        enabled: e.target.checked
+                      }
+                    }
+                  }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            {loyaltySettings.redemptionOptions.giftCards.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.giftCardValue')} (SAR)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.giftCards.value}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        giftCards: {
+                          ...prev.redemptionOptions.giftCards,
+                          value: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.pointsRequired')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.giftCards.pointsRequired}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        giftCards: {
+                          ...prev.redemptionOptions.giftCards,
+                          pointsRequired: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                    {t('settings.maxUsagePerCustomer')}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="input"
+                    value={loyaltySettings.redemptionOptions.giftCards.maxUsagePerCustomer}
+                    onChange={(e) => setLoyaltySettings(prev => ({
+                      ...prev,
+                      redemptionOptions: {
+                        ...prev.redemptionOptions,
+                        giftCards: {
+                          ...prev.redemptionOptions.giftCards,
+                          maxUsagePerCustomer: parseInt(e.target.value)
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

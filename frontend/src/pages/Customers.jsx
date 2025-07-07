@@ -19,6 +19,7 @@ import {
 import { customerService } from '../services/customerService';
 import { formatNumber, formatDate, formatCurrency } from '../utils';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import Modal from '../components/common/Modal';
 import toast from 'react-hot-toast';
 
 const Customers = () => {
@@ -29,6 +30,13 @@ const Customers = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [customerForm, setCustomerForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    birthday: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -80,6 +88,22 @@ const Customers = () => {
       fetchCustomers();
     } catch (error) {
       toast.error(t('customers.adjustPointsError'));
+    }
+  };
+
+  const handleAddCustomer = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      await customerService.createCustomer(customerForm);
+      toast.success(t('customers.customerCreated'));
+      setShowAddModal(false);
+      setCustomerForm({ name: '', email: '', phone: '', birthday: '' });
+      fetchCustomers();
+    } catch (error) {
+      toast.error(t('customers.createCustomerError') || 'Failed to create customer');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -269,6 +293,84 @@ const Customers = () => {
           </button>
         </div>
       )}
+
+      {/* Add Customer Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title={t('customers.addCustomer')}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleAddCustomer} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('common.name')}
+            </label>
+            <input
+              type="text"
+              required
+              className="input"
+              value={customerForm.name}
+              onChange={(e) => setCustomerForm(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('common.email')}
+            </label>
+            <input
+              type="email"
+              required
+              className="input"
+              value={customerForm.email}
+              onChange={(e) => setCustomerForm(prev => ({ ...prev, email: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('common.phone')}
+            </label>
+            <input
+              type="tel"
+              className="input"
+              value={customerForm.phone}
+              onChange={(e) => setCustomerForm(prev => ({ ...prev, phone: e.target.value }))}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('customers.birthday')}
+            </label>
+            <input
+              type="date"
+              className="input"
+              value={customerForm.birthday}
+              onChange={(e) => setCustomerForm(prev => ({ ...prev, birthday: e.target.value }))}
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(false)}
+              className="btn btn-outline"
+              disabled={submitting}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={submitting}
+            >
+              {submitting ? t('common.loading') : t('customers.addCustomer')}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -4,6 +4,26 @@ const Merchant = require('../models/merchant.model');
 const { getCustomerLoyaltyActivity } = require('../services/getCustomerLoyalityActivity');
 // const { getCustomerPointsBalance } = require('../services/createLoyaltyActivity');
 
+// Utility to calculate customer tier based on points and merchant thresholds
+const calculateCustomerTier = (points, tierThresholds = {}) => {
+    const thresholds = {
+        bronze: tierThresholds.tierBronze || 0,
+        silver: tierThresholds.tierSilver || 1000,
+        gold: tierThresholds.tierGold || 5000,
+        platinum: tierThresholds.tierPlatinum || 15000
+    };
+
+    if (points >= thresholds.platinum) {
+        return 'platinum';
+    } else if (points >= thresholds.gold) {
+        return 'gold';
+    } else if (points >= thresholds.silver) {
+        return 'silver';
+    } else {
+        return 'bronze';
+    }
+};
+
 const getCustomerById = async (req, res) => {
     const { id } = req.params;
     const merchant = req.merchant; // Get merchant from protect middleware
@@ -203,6 +223,11 @@ const adjustCustomerPoints = async (req, res) => {
         // Update customer points
         customer.points += pointsToAdjust;
 
+        // Calculate and update customer tier based on new points total
+        const newTier = calculateCustomerTier(customer.points, merchant.loyaltySettings || {});
+        const oldTier = customer.tier || 'bronze';
+        customer.tier = newTier;
+
         // Update merchant total points
         if (type === 'add') {
             merchant.customersPoints = (merchant.customersPoints || 0) + Math.abs(points);
@@ -210,6 +235,11 @@ const adjustCustomerPoints = async (req, res) => {
 
         await customer.save();
         await merchant.save();
+
+        // Log tier change if it occurred
+        if (oldTier !== newTier) {
+            console.log(`\n🎉 Customer ${customer._id} tier updated from ${oldTier} to ${newTier} after manual adjustment!\n`);
+        }
 
         // Log the manual adjustment
         const loyaltyActivity = await CustomerLoyaltyActivity.create({

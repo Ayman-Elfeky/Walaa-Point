@@ -5,14 +5,20 @@ const {
     loginMerchant,
     logoutMerchant,
     getMerchantDashboard,
-    // updateMerchantProfile,
+    updateMerchantProfile,
     getLoyaltySettings,
     updateLoyaltySettings,
     getRewardSettings,
     updateRewardSettings,
     getIdentityAndDesignSettings,
     updateIdentityAndDesignSettings,
-    verifyAuth
+    verifyAuth,
+    getCurrentSubscription,
+    getBillingHistory,
+    getUsageStatistics,
+    updateAppearanceSettings,
+    updateSecuritySettings,
+    sendMail
 } = require('../controllers/merchant.controller');
 
 const {
@@ -23,12 +29,12 @@ const {
 
 // Auth
 router.post('/login', loginMerchant);
-router.post('/logout', logoutMerchant);
+router.post('/logout', protect, logoutMerchant);
 router.get('/verify-auth', protect, verifyAuth);
 
 // Profile
 router.get('/dashboard', protect, getMerchantDashboard);
-// router.put('/profile', protect, updateMerchantProfile); 
+router.put('/profile', protect, updateMerchantProfile);
 
 // Loyalty Settings
 router.get('/LoyaltySettings', protect, getLoyaltySettings);
@@ -37,6 +43,12 @@ router.put('/LoyaltySettings', protect, updateLoyaltySettings);
 // Reward Settings
 router.get('/rewardSettings', protect, getRewardSettings);
 router.put('/rewardSettings', protect, updateRewardSettings);
+
+// Appearance Settings
+router.put('/appearance', protect, updateAppearanceSettings);
+
+// Security Settings
+router.put('/security', protect, updateSecuritySettings);
 
 // Identity and Design Settings
 router.get('/identityAndDesign', protect, getIdentityAndDesignSettings);

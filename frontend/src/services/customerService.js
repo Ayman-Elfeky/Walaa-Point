@@ -32,9 +32,10 @@ export const customerService = {
   },
 
   // Adjust customer points
-  adjustPoints: async (customerId, adjustment, reason) => {
+  adjustPoints: async (customerId, { points, type, reason }) => {
     const response = await api.post(`/customer/${customerId}/adjust-points`, {
-      adjustment,
+      points,
+      type,
       reason
     });
     return response.data;

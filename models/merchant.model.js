@@ -28,6 +28,12 @@ const loyaltySettingsSchema = new mongoose.Schema({
     redemptionLimitPerMonth: { type: Number, default: 5 }, // Max number of redemptions a customer can make per month
     expiryMonths: { type: Number, default: 12 },           // How long earned points are valid (in months)
 
+    // 🎯 Tier Thresholds
+    tierBronze: { type: Number, default: 0 },       // Bronze tier threshold (minimum points)
+    tierSilver: { type: Number, default: 1000 },    // Silver tier threshold (minimum points)
+    tierGold: { type: Number, default: 5000 },      // Gold tier threshold (minimum points)
+    tierPlatinum: { type: Number, default: 15000 }, // Platinum tier threshold (minimum points)
+
     // 🎯 Event-Based Loyalty Rules
 
     purchasePoints: eventRuleSchema,            // Award points for every purchase made by the customer

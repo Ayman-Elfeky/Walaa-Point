@@ -1,8 +1,28 @@
 const Merchant = require('../models/merchant.model');
 const Customer = require('../models/customer.model');
-const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
+const CustomerLoyaltyActivity = require('../models/customerLoyalitActivitySchema.model');
 const { sendEmail } = require('../utils/sendEmail');
 const { notification } = require('../utils/templates/notification.template');
+
+// Utility to calculate customer tier based on points and merchant thresholds
+const calculateCustomerTier = (points, tierThresholds = {}) => {
+    const thresholds = {
+        bronze: tierThresholds.tierBronze || 0,
+        silver: tierThresholds.tierSilver || 1000,
+        gold: tierThresholds.tierGold || 5000,
+        platinum: tierThresholds.tierPlatinum || 15000
+    };
+
+    if (points >= thresholds.platinum) {
+        return 'platinum';
+    } else if (points >= thresholds.gold) {
+        return 'gold';
+    } else if (points >= thresholds.silver) {
+        return 'silver';
+    } else {
+        return 'bronze';
+    }
+};
 
 // Utility to calculate purchase points
 const calculatePurchasePoints = (amount, pointsPerCurrencyUnit) => {
@@ -15,9 +35,20 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
     if (!customer) return;
 
     customer.points += points;
+    
+    // Calculate and update customer tier based on new points total
+    const newTier = calculateCustomerTier(customer.points, merchant.loyaltySettings || {});
+    const oldTier = customer.tier || 'bronze';
+    customer.tier = newTier;
+
     merchant.customersPoints = (merchant.customersPoints || 0) + points; // Update total points for the merchant
     await customer.save();
     await merchant.save();
+
+    // Log tier change if it occurred
+    if (oldTier !== newTier) {
+        console.log(`\n🎉 Customer ${customerId} tier upgraded from ${oldTier} to ${newTier}!\n`);
+    }
 
     await CustomerLoyaltyActivity.create({
         customerId,

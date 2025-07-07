@@ -37,13 +37,13 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Language Toggle */}
         <div className="text-center mb-8">
           <button
             onClick={toggleLanguage}
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
           >
             {i18n.language === 'ar' ? 'English' : 'العربية'}
           </button>
@@ -54,7 +54,7 @@ const LoginForm = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white rounded-2xl shadow-xl p-8"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
         >
           {/* Logo & Title */}
           <div className="text-center mb-8">
@@ -63,10 +63,10 @@ const LoginForm = () => {
                 <div className="w-4 h-4 bg-primary-600 rounded"></div>
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-secondary-900 mb-2">
+            <h1 className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mb-2">
               {t('auth.welcome')}
             </h1>
-            <p className="text-secondary-600">
+            <p className="text-secondary-600 dark:text-gray-400">
               {t('auth.signInToAccount')}
             </p>
           </div>
@@ -75,12 +75,12 @@ const LoginForm = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
                 {t('auth.email')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-secondary-400" />
+                  <Mail className="h-5 w-5 text-secondary-400 dark:text-gray-500" />
                 </div>
                 <input
                   type="email"
@@ -99,18 +99,18 @@ const LoginForm = () => {
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-error-600 mt-1">{errors.email.message}</p>
+                <p className="text-sm text-error-600 dark:text-error-400 mt-1">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
                 {t('auth.password')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-secondary-400" />
+                  <Lock className="h-5 w-5 text-secondary-400 dark:text-gray-500" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -133,14 +133,14 @@ const LoginForm = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-secondary-400 hover:text-secondary-600" />
+                    <EyeOff className="h-5 w-5 text-secondary-400 dark:text-gray-500 hover:text-secondary-600 dark:hover:text-gray-400" />
                   ) : (
-                    <Eye className="h-5 w-5 text-secondary-400 hover:text-secondary-600" />
+                    <Eye className="h-5 w-5 text-secondary-400 dark:text-gray-500 hover:text-secondary-600 dark:hover:text-gray-400" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-error-600 mt-1">{errors.password.message}</p>
+                <p className="text-sm text-error-600 dark:text-error-400 mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -150,15 +150,15 @@ const LoginForm = () => {
                 <input
                   type="checkbox"
                   {...register('rememberMe')}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 dark:border-gray-600 rounded"
                 />
-                <span className="ml-2 text-sm text-secondary-600">
+                <span className="ml-2 text-sm text-secondary-600 dark:text-gray-400">
                   {t('auth.rememberMe')}
                 </span>
               </label>
               <button
                 type="button"
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
               >
                 {t('auth.forgotPassword')}
               </button>
@@ -169,9 +169,9 @@ const LoginForm = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-error-50 border border-error-200 rounded-lg p-3"
+                className="bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg p-3"
               >
-                <p className="text-sm text-error-700">{error}</p>
+                <p className="text-sm text-error-700 dark:text-error-400">{error}</p>
               </motion.div>
             )}
 
@@ -197,7 +197,7 @@ const LoginForm = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-secondary-500">
+            <p className="text-xs text-secondary-500 dark:text-gray-400">
               © 2024 Loyalfy Dashboard. All rights reserved.
             </p>
           </div>

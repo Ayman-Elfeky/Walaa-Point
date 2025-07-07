@@ -95,11 +95,12 @@ const App = () => {
               position="top-right"
               toastOptions={{
                 duration: 4000,
+                className: 'dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700',
                 style: {
-                  background: '#fff',
-                  color: '#374151',
+                  background: 'var(--toast-bg, #fff)',
+                  color: 'var(--toast-text, #374151)',
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--toast-border, #e5e7eb)',
                   borderRadius: '12px',
                   padding: '16px',
                 },

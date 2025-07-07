@@ -117,16 +117,16 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">
+          <h1 className="text-2xl font-bold text-secondary-900 dark:text-gray-100">
             {t('dashboard.title')}
           </h1>
-          <p className="text-secondary-600 mt-1">
+          <p className="text-secondary-600 dark:text-gray-400 mt-1">
             {t('dashboard.welcome')}
           </p>
         </div>
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <Calendar className="h-5 w-5 text-secondary-400" />
-          <span className="text-sm text-secondary-600">
+          <Calendar className="h-5 w-5 text-secondary-400 dark:text-gray-500" />
+          <span className="text-sm text-secondary-600 dark:text-gray-400">
             {formatDate(new Date(), 'PPP')}
           </span>
         </div>
@@ -144,14 +144,14 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="card"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-secondary-600">
+                  <p className="text-sm font-medium text-secondary-600 dark:text-gray-400">
                     {stat.name}
                   </p>
-                  <p className="text-2xl font-bold text-secondary-900 mt-1">
+                  <p className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mt-1">
                     {stat.value}
                   </p>
                   <div className="flex items-center mt-2 space-x-1 rtl:space-x-reverse">
@@ -161,17 +161,17 @@ const Dashboard = () => {
                       <ArrowDownRight className="h-4 w-4 text-red-500" />
                     )}
                     <span className={`text-sm font-medium ${
-                      isPositive ? 'text-green-600' : 'text-red-600'
+                      isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
                       {Math.abs(stat.change).toFixed(1)}%
                     </span>
-                    <span className="text-xs text-secondary-500">
+                    <span className="text-xs text-secondary-500 dark:text-gray-500">
                       vs last month
                     </span>
                   </div>
                 </div>
-                <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                  <Icon className={`h-6 w-6 ${stat.color}`} />
+                <div className={`w-12 h-12 ${stat.bgColor} dark:bg-opacity-20 rounded-lg flex items-center justify-center`}>
+                  <Icon className={`h-6 w-6 ${stat.color} dark:opacity-80`} />
                 </div>
               </div>
             </motion.div>
@@ -186,10 +186,10 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="card"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-secondary-900">
+            <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100">
               {t('dashboard.customerGrowth')}
             </h3>
             <TrendingUp className="h-5 w-5 text-green-500" />
@@ -220,10 +220,10 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="card"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-secondary-900">
+            <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100">
               {t('analytics.engagementLevels')}
             </h3>
             <Activity className="h-5 w-5 text-primary-500" />
@@ -252,7 +252,7 @@ const Dashboard = () => {
                   className="w-3 h-3 rounded-full mr-2"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-sm text-secondary-600">
+                <span className="text-sm text-secondary-600 dark:text-gray-400">
                   {t(`analytics.${item.name.toLowerCase()}`)} ({item.value}%)
                 </span>
               </div>
@@ -266,13 +266,13 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="card"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-secondary-900">
+          <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100">
             {t('dashboard.recentActivity')}
           </h3>
-          <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+          <button className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
             {t('common.view')} {t('common.all')}
           </button>
         </div>
@@ -286,33 +286,33 @@ const Dashboard = () => {
               const activityTime = activity.timestamp || activity.time || new Date();
 
               return (
-                <div key={activityId} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-b-0">
+                <div key={activityId} className="flex items-center justify-between py-3 border-b border-secondary-100 dark:border-gray-700 last:border-b-0">
                   <div className="flex items-center space-x-3 rtl:space-x-reverse">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      activityPoints > 0 ? 'bg-green-100' : 'bg-red-100'
+                      activityPoints > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
                     }`}>
                       {activityPoints > 0 ? (
-                        <TrendingUp className="h-5 w-5 text-green-600" />
+                        <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
                       ) : (
-                        <TrendingDown className="h-5 w-5 text-red-600" />
+                        <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-secondary-900">
+                      <p className="text-sm font-medium text-secondary-900 dark:text-gray-100">
                         {customerName}
                       </p>
-                      <p className="text-xs text-secondary-500">
+                      <p className="text-xs text-secondary-500 dark:text-gray-400">
                         {activityDescription}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className={`text-sm font-semibold ${
-                      activityPoints > 0 ? 'text-green-600' : 'text-red-600'
+                      activityPoints > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
                       {activityPoints > 0 ? '+' : ''}{activityPoints} {t('customers.points')}
                     </p>
-                    <p className="text-xs text-secondary-500">
+                    <p className="text-xs text-secondary-500 dark:text-gray-400">
                       {formatDate(activityTime, 'p')}
                     </p>
                   </div>
@@ -321,9 +321,9 @@ const Dashboard = () => {
             })
           ) : (
             <div className="text-center py-8">
-              <Activity className="h-12 w-12 text-secondary-300 mx-auto mb-4" />
-              <p className="text-secondary-500">No recent activity</p>
-              <p className="text-sm text-secondary-400 mt-1">
+              <Activity className="h-12 w-12 text-secondary-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-secondary-500 dark:text-gray-400">No recent activity</p>
+              <p className="text-sm text-secondary-400 dark:text-gray-500 mt-1">
                 Customer activities will appear here once they start earning or redeeming points
               </p>
             </div>

@@ -38,6 +38,7 @@ import { formatCurrency } from '../utils';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
+import * as settingsService from '../services/settingsService';
 
 const Settings = () => {
   const { t, i18n } = useTranslation();
@@ -155,14 +156,53 @@ const Settings = () => {
     { id: 'security', name: t('settings.security'), icon: Shield }
   ];
 
+  // Fetch loyalty settings from backend on component mount
+  useEffect(() => {
+    const fetchLoyaltySettings = async () => {
+      try {
+        const response = await settingsService.getLoyaltySettings();
+        if (response.success && response.loyaltySettings) {
+          setLoyaltySettings(prev => ({
+            ...prev,
+            ...response.loyaltySettings
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching loyalty settings:', error);
+      }
+    };
+
+    fetchLoyaltySettings();
+  }, []);
+
   const handleSave = async (section) => {
     try {
       setLoading(true);
-      // Here you would make API calls to save the settings
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      toast.success(t('settings.settingsUpdated'));
+      
+      if (section === 'loyalty') {
+        await settingsService.updateLoyaltySettings(loyaltySettings);
+        toast.success(t('settings.loyaltySettingsUpdated'));
+      } else if (section === 'notifications') {
+        await settingsService.updateNotificationSettings(notifications);
+        toast.success(t('settings.notificationSettingsUpdated'));
+      } else if (section === 'profile') {
+        await settingsService.updateProfileSettings(profileData);
+        toast.success(t('settings.profileUpdated') || 'Profile updated successfully!');
+      } else if (section === 'appearance') {
+        await settingsService.updateAppearanceSettings(appearance);
+        toast.success(t('settings.appearanceUpdated') || 'Appearance settings updated successfully!');
+      } else if (section === 'security') {
+        await settingsService.updateSecuritySettings(security);
+        toast.success(t('settings.securityUpdated') || 'Security settings updated successfully!');
+      } else {
+        // Fallback for any other sections
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast.success(t('settings.settingsUpdated'));
+      }
     } catch (error) {
-      toast.error(`Failed to save ${section} settings`);
+      console.error(`Error saving ${section} settings:`, error);
+      const errorMessage = error.response?.data?.message || t('settings.saveError') || `Failed to save ${section} settings`;
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

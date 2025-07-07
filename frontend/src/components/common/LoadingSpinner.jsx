@@ -16,7 +16,7 @@ const LoadingSpinner = ({ size = 'lg', text = null, fullScreen = true }) => {
     <div className="flex flex-col items-center justify-center space-y-4">
       <Loader2 className={`${sizes[size]} text-primary-600 animate-spin`} />
       {text && (
-        <p className="text-sm text-secondary-600 animate-pulse">
+        <p className="text-sm text-secondary-600 dark:text-gray-400 animate-pulse">
           {text}
         </p>
       )}
@@ -25,14 +25,14 @@ const LoadingSpinner = ({ size = 'lg', text = null, fullScreen = true }) => {
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
               <Loader2 className="h-4 w-4 text-primary-600 animate-spin" />
             </div>
           </div>
-          <p className="text-sm text-secondary-600 animate-pulse">
+          <p className="text-sm text-secondary-600 dark:text-gray-400 animate-pulse">
             {text || t('common.loading')}
           </p>
         </div>

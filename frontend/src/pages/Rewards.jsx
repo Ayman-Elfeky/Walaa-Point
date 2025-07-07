@@ -16,7 +16,8 @@ import {
   MoreVertical,
   Calendar,
   Users,
-  TrendingUp
+  TrendingUp,
+  Star
 } from 'lucide-react';
 import { rewardService } from '../services/rewardService';
 import { formatNumber, formatCurrency, formatDate } from '../utils';
@@ -159,10 +160,10 @@ const Rewards = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">
+          <h1 className="text-2xl font-bold text-secondary-900 dark:text-gray-100">
             {t('rewards.title')}
           </h1>
-          <p className="text-secondary-600 mt-1">
+          <p className="text-secondary-600 dark:text-gray-400 mt-1">
             {t('rewards.manageRewards')} ({formatNumber(rewards.length)} {t('common.total')})
           </p>
         </div>
@@ -182,17 +183,17 @@ const Rewards = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-secondary-600">{t('rewards.title')}</p>
-              <p className="text-2xl font-bold text-secondary-900 mt-1">
+              <p className="text-sm font-medium text-secondary-600 dark:text-gray-400">{t('rewards.title')}</p>
+              <p className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mt-1">
                 {formatNumber(rewards.length)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Gift className="h-6 w-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <Gift className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </motion.div>
@@ -201,17 +202,17 @@ const Rewards = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="card"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-secondary-600">{t('common.active')} {t('rewards.title')}</p>
-              <p className="text-2xl font-bold text-secondary-900 mt-1">
+              <p className="text-sm font-medium text-secondary-600 dark:text-gray-400">{t('rewards.activeRewards')}</p>
+              <p className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mt-1">
                 {formatNumber(rewards.filter(r => r.status === 'active').length)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </motion.div>
@@ -220,17 +221,17 @@ const Rewards = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-secondary-600">{t('rewards.redemptions')}</p>
-              <p className="text-2xl font-bold text-secondary-900 mt-1">
-                {formatNumber(rewards.reduce((acc, r) => acc + r.usageCount, 0))}
+              <p className="text-sm font-medium text-secondary-600 dark:text-gray-400">{t('rewards.totalRedemptions')}</p>
+              <p className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mt-1">
+                {formatNumber(rewards.reduce((sum, reward) => sum + (reward.redemptions || 0), 0))}
               </p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Users className="h-6 w-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </motion.div>
@@ -239,54 +240,56 @@ const Rewards = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="card"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-secondary-600">{t('rewards.pointsRequired')}</p>
-              <p className="text-2xl font-bold text-secondary-900 mt-1">
-                {formatNumber(Math.round(rewards.reduce((acc, r) => acc + r.pointsRequired, 0) / rewards.length))}
+              <p className="text-sm font-medium text-secondary-600 dark:text-gray-400">{t('rewards.avgPointsRequired')}</p>
+              <p className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mt-1">
+                {formatNumber(rewards.length > 0 ? rewards.reduce((sum, reward) => sum + (reward.pointsRequired || 0), 0) / rewards.length : 0)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-yellow-600" />
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+              <Star className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* Filters */}
-      <div className="card">
+      {/* Search and Filter */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6"
+      >
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
           <div className="flex-1">
             <div className="relative">
-              <Search className="h-5 w-5 absolute left-3 rtl:left-auto rtl:right-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-secondary-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder={t('rewards.searchRewards')}
-                className="input pl-10 rtl:pl-3 rtl:pr-10"
+                className="input pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
-
-          {/* Type Filter */}
           <select
-            className="input w-full sm:w-auto"
+            className="input w-auto min-w-[140px]"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
           >
             <option value="all">{t('rewards.allTypes')}</option>
-            <option value="percentage">{t('rewards.percentage')}</option>
-            <option value="fixed">{t('rewards.fixed')}</option>
-            <option value="shipping">{t('rewards.shipping')}</option>
-            <option value="product">{t('rewards.product')}</option>
+            <option value="percentage_discount">{t('rewards.percentageDiscount')}</option>
+            <option value="fixed_discount">{t('rewards.fixedDiscount')}</option>
+            <option value="free_shipping">{t('rewards.freeShipping')}</option>
+            <option value="free_product">{t('rewards.freeProduct')}</option>
             <option value="cashback">{t('rewards.cashback')}</option>
           </select>
         </div>
-      </div>
+      </motion.div>
 
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -300,44 +303,44 @@ const Rewards = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="card hover:shadow-lg transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-smooth border border-secondary-100 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
             >
               {/* Reward Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getRewardTypeColor(reward.type)}`}>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getRewardTypeColor(reward.type)} dark:bg-opacity-20`}>
                     <RewardIcon className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-secondary-900">
+                    <h3 className="font-semibold text-secondary-900 dark:text-gray-100">
                       {reward.name}
                     </h3>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(reward.status)}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(reward.status)} dark:bg-opacity-20`}>
                       {reward.status.charAt(0).toUpperCase() + reward.status.slice(1)}
                     </span>
                   </div>
                 </div>
-                <button className="text-secondary-400 hover:text-secondary-600">
+                <button className="text-secondary-400 dark:text-gray-400 hover:text-secondary-600 dark:hover:text-gray-300">
                   <MoreVertical className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Reward Description */}
-              <p className="text-sm text-secondary-600 mb-4">
+              <p className="text-sm text-secondary-600 dark:text-gray-400 mb-4">
                 {reward.description}
               </p>
 
               {/* Reward Value & Points */}
-              <div className="bg-secondary-50 rounded-lg p-4 mb-4">
+              <div className="bg-secondary-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-secondary-700">{t('rewards.rewardValueLabel')}</span>
-                  <span className="text-lg font-bold text-primary-600">
+                  <span className="text-sm font-medium text-secondary-700 dark:text-gray-300">{t('rewards.rewardValueLabel')}</span>
+                  <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                     {formatRewardValue(reward.type, reward.value)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-secondary-700">{t('rewards.pointsRequired')}</span>
-                  <span className="text-lg font-bold text-secondary-900">
+                  <span className="text-sm font-medium text-secondary-700 dark:text-gray-300">{t('rewards.pointsRequired')}</span>
+                  <span className="text-lg font-bold text-secondary-900 dark:text-gray-100">
                     {formatNumber(reward.pointsRequired)}
                   </span>
                 </div>
@@ -346,14 +349,14 @@ const Rewards = () => {
               {/* Usage Stats */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-secondary-600">{t('rewards.usage')}</span>
-                  <span className="text-sm font-medium text-secondary-900">
+                  <span className="text-sm text-secondary-600 dark:text-gray-400">{t('rewards.usage')}</span>
+                  <span className="text-sm font-medium text-secondary-900 dark:text-gray-100">
                     {formatNumber(reward.usageCount)} / {formatNumber(reward.maxUsage)}
                   </span>
                 </div>
-                <div className="w-full bg-secondary-200 rounded-full h-2">
+                <div className="w-full bg-secondary-200 dark:bg-gray-600 rounded-full h-2">
                   <div 
-                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary-600 dark:bg-primary-400 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                   />
                 </div>
@@ -361,7 +364,7 @@ const Rewards = () => {
 
               {/* Reward Details */}
               <div className="space-y-2 mb-4">
-                <div className="flex items-center text-sm text-secondary-600">
+                <div className="flex items-center text-sm text-secondary-600 dark:text-gray-400">
                   <Calendar className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
                   {t('rewards.validUntil')} {formatDate(reward.validUntil, 'MMM dd, yyyy')}
                 </div>
@@ -380,7 +383,7 @@ const Rewards = () => {
                 <button className="btn btn-outline text-xs py-2">
                   <Edit className="h-4 w-4" />
                 </button>
-                <button className="btn text-red-600 hover:bg-red-50 text-xs py-2">
+                <button className="btn text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs py-2">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -392,11 +395,11 @@ const Rewards = () => {
       {/* Empty State */}
       {filteredRewards.length === 0 && (
         <div className="text-center py-12">
-          <Gift className="h-16 w-16 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-secondary-900 mb-2">
+          <Gift className="h-16 w-16 text-secondary-300 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-gray-100 mb-2">
             {t('rewards.noRewardsFoundEmpty')}
           </h3>
-          <p className="text-secondary-500 mb-6">
+          <p className="text-secondary-500 dark:text-gray-400 mb-6">
             {t('rewards.createFirstRewardDesc')}
           </p>
           <button

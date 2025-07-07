@@ -186,6 +186,178 @@ const updateLoyaltySettings = async (req, res) => {
     }
 };
 
+// Update merchant profile (store information)
+const updateMerchantProfile = async (req, res) => {
+    try {
+        const merchantId = req.merchant._id;
+        const updates = req.body;
+
+        // Validate and sanitize updates
+        const allowedFields = ['merchantName', 'installerEmail', 'installerMobile', 'merchantDomain'];
+        const updateFields = {};
+        
+        for (const [key, value] of Object.entries(updates)) {
+            if (allowedFields.includes(key) && value !== undefined && value !== null) {
+                updateFields[key] = value;
+            }
+        }
+
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No valid fields to update'
+            });
+        }
+
+        const merchant = await Merchant.findByIdAndUpdate(
+            merchantId,
+            { $set: updateFields },
+            { new: true, runValidators: true }
+        );
+
+        if (!merchant) {
+            return res.status(404).json({
+                success: false,
+                message: 'Merchant not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            merchant: {
+                name: merchant.merchantName,
+                email: merchant.installerEmail,
+                phone: merchant.installerMobile,
+                website: merchant.merchantDomain
+            }
+        });
+    } catch (error) {
+        console.error('Error updating merchant profile:', error.message);
+        
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: validationErrors
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong'
+        });
+    }
+};
+
+// Update appearance settings (stored in merchant preferences)
+const updateAppearanceSettings = async (req, res) => {
+    try {
+        const merchantId = req.merchant._id;
+        const updates = req.body;
+
+        // For now, we'll store appearance settings in merchant document
+        // In future, this could be moved to a separate preferences collection
+        const updateFields = {};
+        
+        if (updates.currency) updateFields['preferences.currency'] = updates.currency;
+        if (updates.dateFormat) updateFields['preferences.dateFormat'] = updates.dateFormat;
+        if (updates.language) updateFields['preferences.language'] = updates.language;
+
+        const merchant = await Merchant.findByIdAndUpdate(
+            merchantId,
+            { $set: updateFields },
+            { new: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Appearance settings updated successfully',
+            preferences: merchant.preferences || {}
+        });
+    } catch (error) {
+        console.error('Error updating appearance settings:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong'
+        });
+    }
+};
+
+// Update security settings
+const updateSecuritySettings = async (req, res) => {
+    try {
+        const merchantId = req.merchant._id;
+        const { currentPassword, newPassword, confirmPassword, twoFactorEnabled, loginNotifications } = req.body;
+
+        const merchant = await Merchant.findById(merchantId);
+        if (!merchant) {
+            return res.status(404).json({
+                success: false,
+                message: 'Merchant not found'
+            });
+        }
+
+        // If updating password
+        if (currentPassword && newPassword) {
+            // Verify current password
+            const isCurrentPasswordValid = await bcrypt.compare(currentPassword, merchant.password);
+            if (!isCurrentPasswordValid) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Current password is incorrect'
+                });
+            }
+
+            // Validate new password
+            if (newPassword !== confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'New passwords do not match'
+                });
+            }
+
+            if (newPassword.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Password must be at least 6 characters long'
+                });
+            }
+
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            merchant.password = hashedPassword;
+        }
+
+        // Update security preferences
+        const updateFields = {};
+        if (typeof twoFactorEnabled === 'boolean') {
+            updateFields['securitySettings.twoFactorEnabled'] = twoFactorEnabled;
+        }
+        if (typeof loginNotifications === 'boolean') {
+            updateFields['securitySettings.loginNotifications'] = loginNotifications;
+        }
+
+        // Apply updates
+        if (Object.keys(updateFields).length > 0) {
+            await Merchant.findByIdAndUpdate(merchantId, { $set: updateFields });
+        }
+        
+        await merchant.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Security settings updated successfully'
+        });
+    } catch (error) {
+        console.error('Error updating security settings:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong'
+        });
+    }
+};
 
 // i will make this to get the dashboard of the merchant
 // but i need to get the access token and refresh token from the merchant model
@@ -574,5 +746,8 @@ module.exports = {
     verifyAuth,
     getCurrentSubscription,
     getBillingHistory,
-    getUsageStatistics
+    getUsageStatistics,
+    updateMerchantProfile,
+    updateAppearanceSettings,
+    updateSecuritySettings
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
@@ -11,6 +11,9 @@ const LoginForm = () => {
   const { t, i18n } = useTranslation();
   const { login, isLoading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  
+  const date = new Date();
+  const year = date.getFullYear()
   
   const {
     register,
@@ -198,7 +201,7 @@ const LoginForm = () => {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-xs text-secondary-500 dark:text-gray-400">
-              © 2024 Loyalfy Dashboard. All rights reserved.
+              © {year} Loyalfy Dashboard. All rights reserved.
             </p>
           </div>
         </motion.div>

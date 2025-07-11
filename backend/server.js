@@ -24,10 +24,10 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests from specified origins or no origin (e.g., Postman)
         const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
-        
+
         // Allow requests with no origin (mobile apps, postman, etc.)
         if (!origin) return callback(null, true);
-        
+
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -62,6 +62,16 @@ app.use(`${API_PREFIX}/reward`, rewardRoutes);
 app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
 app.use(`${API_PREFIX}/subscription`, subscriptionRoutes);
 
+// Health check endpoint
+app.get(`${API_PREFIX}/health`, (req, res) => {
+    res.status(200).json({
+        status: 'OK',
+        timestamp: new Date(),
+        version: '1.0.0',
+        environment: process.env.NODE_ENV
+    });
+});
+
 // // Health check endpoint
 // app.get('/health', (req, res) => {
 //     res.status(200).json({ status: 'OK', timestamp: new Date() });
@@ -83,7 +93,7 @@ app.use(`${API_PREFIX}/subscription`, subscriptionRoutes);
 
 app.get('/', (req, res) => {
     res.send('<h1>Welcome to the Loyalty App API</h1><p>Use the API prefix <code>' + process.env.API_PREFIX + '</code> for all endpoints.</p>');
-}); 
+});
 // console.log(webhookRoute)
 app.use('/webhook', webhookRoute);
 

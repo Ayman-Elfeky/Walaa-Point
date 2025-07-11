@@ -7,10 +7,6 @@ const notificationSettingsSchema = new mongoose.Schema({
     birthday: { type: Boolean, default: true }
 });
 
-
-
-
-
 // Schema for individual event-based point rules
 const eventRuleSchema = new mongoose.Schema({
     enabled: { type: Boolean, default: false }, // Enable/disable this event rule

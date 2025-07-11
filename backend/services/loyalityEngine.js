@@ -1,6 +1,6 @@
 const Merchant = require('../models/merchant.model');
 const Customer = require('../models/customer.model');
-const CustomerLoyaltyActivity = require('../models/customerLoyalitActivitySchema.model');
+const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
 const { sendEmail } = require('../utils/sendEmail');
 const { notification } = require('../utils/templates/notification.template');
 

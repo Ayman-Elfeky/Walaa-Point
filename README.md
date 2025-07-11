@@ -417,7 +417,7 @@ This project is licensed under the ISC License.
 For support and questions:
 - Email: support@yourdomain.com
 - Documentation: [API Docs](https://yourdomain.com/docs)
-- Issues: [GitHub Issues](https://github.com/yourrepo/issues)
+- Issues: [GitHub Issues](https://github.com/Loyality-program-backend/issues)
 
 ---
 

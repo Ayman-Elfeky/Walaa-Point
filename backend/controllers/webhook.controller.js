@@ -252,6 +252,7 @@ const onStoreAuthorize = async (req, res) => {
 };
 
 const onAppInstalled = async (req, res) => {
+    console.log("\nApp installed successfully\n");
     return res.status(200).json({ message: 'App installed successfully' });
 };
 

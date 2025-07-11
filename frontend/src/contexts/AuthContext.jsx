@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }) => {
         
         if (user) {
           // Try to verify authentication with backend using lighter endpoint
-          const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/merchant/verify-auth`, {
+          const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/merchant/login`, {
             withCredentials: true,
             timeout: 5000 // 5 second timeout
           });
@@ -138,6 +138,7 @@ export const AuthProvider = ({ children }) => {
                 user: JSON.parse(user)
               }
             });
+            console.log("User:", user);
           } else {
             dispatch({ type: 'AUTH_FAILURE', payload: null });
           }

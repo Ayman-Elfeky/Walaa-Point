@@ -7,15 +7,9 @@ const loyaltyEngine = require('../services/loyalityEngine');
 const Customer = require('../models/customer.model');
 
 const webhookLogic = (req, res) => {
-    console.log('\nWebhook request received:', req.body, '\n');
     const { event } = req.body;
 
-    if (!event) {
-        console.log('\nNo event type provided in webhook request\n');
-        return res.status(400).json({ message: 'Event type is required' });
-    }
-
-    console.log(`\nProcessing webhook event: ${event}\n`);
+    console.log(`🔄 Processing webhook event: ${event}`);
 
     switch (event) {
         case 'app.installed':
@@ -24,16 +18,28 @@ const webhookLogic = (req, res) => {
             return onAppUninstalled(req, res);
         case 'app.store.authorize':
             return onStoreAuthorize(req, res);
-        // case 'app.feedback.created':
-        //     return onFeedbackCreated(req, res);
+        case 'app.feedback.created':
+            return onFeedbackCreated(req, res);
         case 'order.created':
             return onOrderCreated(req, res);
+        case 'order.updated':
+            return onOrderUpdated(req, res);
         case 'review.added':
             return onReviewAdded(req, res);
         case 'customer.login':
             return onCustomerLogin(req, res);
+        case 'customer.created':
+            return onCustomerCreated(req, res);
+        case 'product.created':
+        case 'product.updated':
+            return onProductUpdated(req, res);
         default:
-            return res.status(400).json({ message: 'Unknown event type' });
+            console.warn(`⚠️  Unknown webhook event: ${event}`);
+            return res.status(400).json({ 
+                error: 'Unknown event type',
+                event: event,
+                message: 'This event type is not supported' 
+            });
     }
 };
 
@@ -269,19 +275,114 @@ const onAppUninstalled = async (req, res) => {
     }
 };
 
-const fetchMerchantDetails = async (accessToken) => {
+const onOrderUpdated = async (req, res) => {
     try {
-        const response = await fetch('https://accounts.salla.sa/oauth2/user/info', {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/json'
-            }
+        console.log('🔄 Order updated webhook received');
+        const { merchant: merchantId, data } = req.body;
+        
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        // Log the order update for analytics
+        console.log(`📦 Order ${data.id} updated for merchant ${merchantId}`);
+        
+        res.status(200).json({ 
+            message: 'Order update processed successfully',
+            orderId: data.id 
+        });
+    } catch (error) {
+        console.error('❌ Error processing order update:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onCustomerCreated = async (req, res) => {
+    try {
+        console.log('👤 Customer created webhook received');
+        const { merchant: merchantId, data } = req.body;
+        
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        // Check if customer already exists
+        let customer = await Customer.findOne({ 
+            customerId: data.id, 
+            merchant: merchant._id 
         });
 
-        if (!response.ok) throw new Error(`Salla API error: ${response.status}`);
-        return await response.json();
+        if (!customer) {
+            // Create new customer
+            customer = new Customer({
+                customerId: data.id,
+                name: data.name,
+                email: data.email,
+                phone: data.mobile,
+                dateOfBirth: data.date_of_birth ? new Date(data.date_of_birth) : null,
+                merchant: merchant._id,
+                metadata: data
+            });
+            await customer.save();
+
+            // Award welcome points if enabled
+            if (merchant.loyaltySettings?.welcomePoints?.enabled) {
+                await loyaltyEngine({
+                    event: 'welcome',
+                    merchant,
+                    customer,
+                    metadata: { source: 'customer_created_webhook' }
+                });
+            }
+
+            console.log(`✅ New customer created: ${customer.name || customer.customerId}`);
+        }
+
+        res.status(200).json({ 
+            message: 'Customer creation processed successfully',
+            customerId: data.id 
+        });
     } catch (error) {
-        console.error('Error fetching merchant details:', error);
+        console.error('❌ Error processing customer creation:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onProductUpdated = async (req, res) => {
+    try {
+        console.log('🛍️ Product updated webhook received');
+        const { merchant: merchantId, data } = req.body;
+        
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        // Log the product update for analytics
+        console.log(`📦 Product ${data.id} updated for merchant ${merchantId}`);
+        
+        res.status(200).json({ 
+            message: 'Product update processed successfully',
+            productId: data.id 
+        });
+    } catch (error) {
+        console.error('❌ Error processing product update:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const sallaSDK = require('../services/sallaSDK');
+
+const fetchMerchantDetails = async (accessToken) => {
+    try {
+        console.log('🔍 Fetching merchant details with SDK...');
+        const data = await sallaSDK.getMerchantInfo(accessToken);
+        console.log('✅ Merchant details fetched successfully');
+        return data;
+    } catch (error) {
+        console.error('❌ Error fetching merchant details:', error);
         return {
             data: {
                 name: 'Unknown',

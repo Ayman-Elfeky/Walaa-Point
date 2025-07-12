@@ -1,25 +1,22 @@
-const getProducts = async(accessToken, merchantId) => {
-    console.log(`\nFetching products for merchant ${merchantId}...\n`);
+const sallaSDK = require('./sallaSDK');
+
+const getProducts = async(accessToken, merchantId, options = {}) => {
+    console.log(`🔍 Fetching products for merchant ${merchantId} with SDK...`);
     try {
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // Last 24 hours
-        const url = `https://api.salla.dev/admin/v2/products?date_from=${since}`;
+        // Set default options
+        const defaultOptions = {
+            limit: 50,
+            page: 1,
+            date_from: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Last 24 hours
+            ...options
+        };
 
-        const res = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: 'application/json'
-            }
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch products for merchant ${merchantId}`);
-        }
-
-        const data = await res.json();
-        console.log('\nFetched Products: ', data.data, '\n');
+        const data = await sallaSDK.getProducts(accessToken, defaultOptions);
+        
+        console.log(`✅ Fetched ${data.data?.length || 0} products for merchant ${merchantId}`);
         return data.data || [];
     } catch (err) {
-        console.error(`Error in getProducts for merchant ${merchantId}:`, err.message);
+        console.error(`❌ Error in getProducts for merchant ${merchantId}:`, err.message);
         return []; // fallback to empty list
     }
 }

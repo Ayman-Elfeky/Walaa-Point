@@ -1,24 +1,14 @@
+const sallaSDK = require('./sallaSDK');
+
 const getLoyaltyPoints = async (accessToken, customerId) => {
-    console.log(`\nFetching loyalty points for customer ${customerId}...\n`);
+    console.log(`🔍 Fetching loyalty points for customer ${customerId} with SDK...`);
     try {
-        const url = `https://api.salla.dev/admin/v2/customers/loyalty/points?customer_id=${customerId}`;
-
-        const res = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: 'application/json'
-            }
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch loyalty points for customer ${customerId}`);
-        }
-
-        const data = await res.json();
-        console.log('\nFetched Loyalty Points: ', data, '\n');
+        const data = await sallaSDK.getCustomerLoyaltyPoints(accessToken, customerId);
+        
+        console.log(`✅ Fetched loyalty points for customer ${customerId}`);
         return data.data || [];
     } catch (err) {
-        console.error(`Error in getLoyaltyPoints for customer ${customerId}:`, err.message);
+        console.error(`❌ Error in getLoyaltyPoints for customer ${customerId}:`, err.message);
         return []; // fallback to empty list
     }
 };

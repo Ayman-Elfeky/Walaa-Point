@@ -1,25 +1,21 @@
-const getCustomers = async (accessToken) => {
-    console.log(`\nFetching customers...\n`);
+const sallaSDK = require('./sallaSDK');
+
+const getCustomers = async (accessToken, options = {}) => {
+    console.log(`🔍 Fetching customers with SDK...`);
     try {
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // Last 24 hours
-        const url = `https://api.salla.dev/admin/v2/customers`;
+        // Set default options
+        const defaultOptions = {
+            limit: 50,
+            page: 1,
+            ...options
+        };
 
-        const res = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: 'application/json'
-            }
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch customers`);
-        }
-
-        const data = await res.json();
-        console.log('\nFetched Customers: ', data, '\n');
+        const data = await sallaSDK.getCustomers(accessToken, defaultOptions);
+        
+        console.log(`✅ Fetched ${data.data?.length || 0} customers`);
         return data.data || [];
     } catch (err) {
-        console.error(`\nError in getCustomers:`, err.message);
+        console.error(`❌ Error in getCustomers:`, err.message);
         return []; // fallback to empty list
     }
 };

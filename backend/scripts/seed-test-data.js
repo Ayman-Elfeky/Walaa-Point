@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -13,7 +13,8 @@ const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchem
 const createTestData = async () => {
     try {
         // Connect to MongoDB
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/loyalty-app');
+        console.log('🔗 Connecting to MongoDB...', process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Connected to MongoDB');
 
         // Clear existing test data
@@ -22,7 +23,7 @@ const createTestData = async () => {
         await Customer.deleteMany({});
         await Reward.deleteMany({});
         await Transaction.deleteMany({});
-        await Coupon.deleteMany({});
+        await Coupon.deleteMany({}); 
         await CustomerLoyaltyActivity.deleteMany({});
 
         // Hash the password

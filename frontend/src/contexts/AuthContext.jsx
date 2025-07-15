@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'AUTH_START' });
 
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/merchant/login`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/merchant/login`, {
         email,
         password
       }, {
@@ -184,7 +184,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // Call logout endpoint to clear HTTP-only cookie
-      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/merchant/logout`, {}, {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/merchant/logout`, {}, {
         withCredentials: true
       });
     } catch (error) {

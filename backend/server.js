@@ -23,7 +23,7 @@ const app = express();
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests from specified origins or no origin (e.g., Postman)
-        const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173', "https://app7000.maayn.me"];
+        const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173', "https://app7000.maayn.me", "http://localhost:7000"];
 
         // Allow requests with no origin (mobile apps, postman, etc.)
         if (!origin) return callback(null, true);

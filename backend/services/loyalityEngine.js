@@ -71,6 +71,51 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
     });
 };
 
+// Reusable function to deduct points and save log
+const deductPoints = async ({ merchant, customerId, points, event, metadata = {} }) => {
+    const customer = await Customer.findOne({ _id: customerId, merchant: merchant._id });
+    if (!customer) return;
+
+    // Make sure we don't go below 0 points
+    const pointsToDeduct = Math.min(points, customer.points);
+    customer.points -= pointsToDeduct;
+    
+    // Calculate and update customer tier based on new points total
+    const newTier = calculateCustomerTier(customer.points, merchant.loyaltySettings || {});
+    const oldTier = customer.tier || 'bronze';
+    customer.tier = newTier;
+
+    // Update merchant's total points
+    merchant.customersPoints = Math.max(0, (merchant.customersPoints || 0) - pointsToDeduct);
+    await customer.save();
+    await merchant.save();
+
+    // Log tier change if it occurred
+    if (oldTier !== newTier) {
+        console.log(`\n📉 Customer ${customerId} tier changed from ${oldTier} to ${newTier} due to point deduction\n`);
+    }
+
+    await CustomerLoyaltyActivity.create({
+        customerId,
+        merchantId: merchant._id,
+        event,
+        points: -pointsToDeduct, // Negative points to indicate deduction
+        metadata,
+        createdAt: new Date()
+    });
+
+    console.log(`\n${pointsToDeduct} points deducted from customer ${customerId} for ${event}\n`);
+
+    // Send notification email if enabled
+    await sendCustomerNotification({
+        customer,
+        merchant,
+        event,
+        points: pointsToDeduct,
+        metadata
+    });
+};
+
 // Function to send email notifications to customers
 const sendCustomerNotification = async ({ customer, merchant, event, points, metadata = {} }) => {
     try {
@@ -130,6 +175,34 @@ const sendCustomerNotification = async ({ customer, merchant, event, points, met
                     contentArabic = `تهانينا! تم إنشاء كوبون خصم جديد لك من متجر ${merchant.merchantName}`;
                     contentEnglish = `Congratulations! A new discount coupon has been created for you from ${merchant.merchantName} store`;
                     code = metadata.couponCode;
+                }
+                break;
+
+            case 'pointsDeduction':
+                // Only send notification if enabled (check general settings)
+                if (notificationSettings.earnNewPoints) {
+                    shouldSendEmail = true;
+                    const reason = metadata.reason || 'order_cancelled';
+                    let reasonArabic = '';
+                    let reasonEnglish = '';
+                    
+                    switch (reason) {
+                        case 'order_deleted':
+                            reasonArabic = 'لحذف الطلب';
+                            reasonEnglish = 'due to order deletion';
+                            break;
+                        case 'order_refunded':
+                            reasonArabic = 'لاسترداد الطلب';
+                            reasonEnglish = 'due to order refund';
+                            break;
+                        default:
+                            reasonArabic = 'لإلغاء الطلب';
+                            reasonEnglish = 'due to order cancellation';
+                    }
+                    
+                    subjectArabic = 'تم خصم نقاط من رصيدك';
+                    contentArabic = `تم خصم ${points} نقطة من رصيدك ${reasonArabic} في متجر ${merchant.merchantName}`;
+                    contentEnglish = `${points} points have been deducted from your account ${reasonEnglish} at ${merchant.merchantName} store`;
                 }
                 break;
 
@@ -236,6 +309,13 @@ const LoyaltyEngine = {
             case 'shareReferral':
                 if (loyalty.shareReferralPoints?.enabled) {
                     await awardPoints({ merchant, customerId, points: loyalty.shareReferralPoints.points, event: 'shareReferral', metadata: data });
+                }
+                break;
+
+            case 'pointsDeduction':
+                const pointsToDeduct = data.pointsDeducted || 0;
+                if (pointsToDeduct > 0) {
+                    await deductPoints({ merchant, customerId, points: pointsToDeduct, event: 'pointsDeduction', metadata: data });
                 }
                 break;
 

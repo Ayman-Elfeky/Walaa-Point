@@ -24,6 +24,10 @@ const webhookLogic = (req, res) => {
             return onOrderCreated(req, res);
         case 'order.updated':
             return onOrderUpdated(req, res);
+        case 'order.deleted':
+            return onOrderDeleted(req, res);
+        case 'order.refunded':
+            return onOrderRefunded(req, res);
         case 'review.added':
             return onReviewAdded(req, res);
         case 'customer.login':
@@ -369,6 +373,133 @@ const onProductUpdated = async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error processing product update:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onOrderDeleted = async (req, res) => {
+    try {
+        console.log('🗑️ Order deleted webhook received');
+        const { merchant: merchantId, data } = req.body;
+        
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        // Find the customer associated with this deleted order
+        const customer = await Customer.findOne({ 
+            customerId: data.customer_id, 
+            merchant: merchant._id 
+        });
+
+        if (!customer) {
+            console.log(`⚠️ Customer not found for deleted order: ${data.id}`);
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        // Handle points deduction for deleted order
+        // Only deduct points if the order had awarded points previously
+        if (data.total && data.total > 0) {
+            const metadata = { 
+                orderId: data.id, 
+                amount: data.total, 
+                reason: 'order_deleted' 
+            };
+
+            // Calculate points that should be deducted
+            const pointsToDeduct = Math.floor(data.total * (merchant.loyaltySettings?.pointsPerCurrency || 1));
+            
+            if (pointsToDeduct > 0 && customer.loyaltyPoints >= pointsToDeduct) {
+                // Deduct points using loyalty engine
+                await loyaltyEngine({
+                    event: 'pointsDeduction',
+                    merchant,
+                    customer,
+                    metadata: {
+                        ...metadata,
+                        pointsDeducted: pointsToDeduct,
+                        originalEvent: 'order_deleted'
+                    }
+                });
+
+                console.log(`📉 Points deducted for deleted order: ${pointsToDeduct} points`);
+            }
+        }
+
+        console.log(`🗑️ Order ${data.id} deleted for merchant ${merchantId}`);
+        
+        res.status(200).json({ 
+            message: 'Order deletion processed successfully',
+            orderId: data.id 
+        });
+    } catch (error) {
+        console.error('❌ Error processing order deletion:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onOrderRefunded = async (req, res) => {
+    try {
+        console.log('💰 Order refunded webhook received');
+        const { merchant: merchantId, data } = req.body;
+        
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        // Find the customer associated with this refunded order
+        const customer = await Customer.findOne({ 
+            customerId: data.customer_id, 
+            merchant: merchant._id 
+        });
+
+        if (!customer) {
+            console.log(`⚠️ Customer not found for refunded order: ${data.id}`);
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        // Handle points deduction for refunded order
+        const refundAmount = data.refund_amount || data.total || 0;
+        
+        if (refundAmount > 0) {
+            const metadata = { 
+                orderId: data.id, 
+                amount: refundAmount,
+                totalOrderAmount: data.total,
+                reason: 'order_refunded' 
+            };
+
+            // Calculate points that should be deducted based on refund amount
+            const pointsToDeduct = Math.floor(refundAmount * (merchant.loyaltySettings?.pointsPerCurrency || 1));
+            
+            if (pointsToDeduct > 0 && customer.loyaltyPoints >= pointsToDeduct) {
+                // Deduct points using loyalty engine
+                await loyaltyEngine({
+                    event: 'pointsDeduction',
+                    merchant,
+                    customer,
+                    metadata: {
+                        ...metadata,
+                        pointsDeducted: pointsToDeduct,
+                        originalEvent: 'order_refunded'
+                    }
+                });
+
+                console.log(`📉 Points deducted for refunded order: ${pointsToDeduct} points`);
+            }
+        }
+
+        console.log(`💰 Order ${data.id} refunded for merchant ${merchantId}`);
+        
+        res.status(200).json({ 
+            message: 'Order refund processed successfully',
+            orderId: data.id,
+            refundAmount: refundAmount
+        });
+    } catch (error) {
+        console.error('❌ Error processing order refund:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };

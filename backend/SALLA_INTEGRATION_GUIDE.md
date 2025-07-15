@@ -48,6 +48,8 @@ The integration supports the following webhook events:
 - `app.store.authorize` - Store authorization
 - `order.created` - New order created
 - `order.updated` - Order updated
+- `order.deleted` - Order deleted (with point deduction)
+- `order.refunded` - Order refunded (with point deduction)
 - `customer.login` - Customer login
 - `customer.created` - New customer created
 - `review.added` - Product review added
@@ -56,9 +58,19 @@ The integration supports the following webhook events:
 
 ### Loyalty Events
 - Automatic point allocation on orders
+- Automatic point deduction on order deletion/refund
 - Birthday point rewards
 - Review point rewards
 - Welcome point rewards
+
+### Points Management
+- **Point Allocation**: Points are automatically awarded when orders are created
+- **Point Deduction**: Points are automatically deducted when:
+  - Orders are deleted (full point deduction based on order total)
+  - Orders are refunded (partial point deduction based on refund amount)
+- **Smart Deduction**: Points are never deducted below zero
+- **Tier Management**: Customer tiers are automatically updated after point changes
+- **Activity Logging**: All point transactions are logged for audit purposes
 
 ## Security Features
 
@@ -94,6 +106,7 @@ The integration supports the following webhook events:
 
 ### Test Webhook
 ```bash
+# Test order creation (awards points)
 curl -X POST http://localhost:5000/webhook \
   -H "Content-Type: application/json" \
   -H "x-salla-signature: sha256=your-signature" \
@@ -104,6 +117,35 @@ curl -X POST http://localhost:5000/webhook \
       "id": "order-123",
       "customer_id": "customer-123",
       "total": 100
+    }
+  }'
+
+# Test order deletion (deducts points)
+curl -X POST http://localhost:5000/webhook \
+  -H "Content-Type: application/json" \
+  -H "x-salla-signature: sha256=your-signature" \
+  -d '{
+    "event": "order.deleted",
+    "merchant": "your-merchant-id",
+    "data": {
+      "id": "order-123",
+      "customer_id": "customer-123",
+      "total": 100
+    }
+  }'
+
+# Test order refund (deducts points based on refund amount)
+curl -X POST http://localhost:5000/webhook \
+  -H "Content-Type: application/json" \
+  -H "x-salla-signature: sha256=your-signature" \
+  -d '{
+    "event": "order.refunded",
+    "merchant": "your-merchant-id",
+    "data": {
+      "id": "order-123",
+      "customer_id": "customer-123",
+      "total": 100,
+      "refund_amount": 50
     }
   }'
 ```

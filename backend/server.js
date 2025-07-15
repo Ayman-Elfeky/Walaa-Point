@@ -23,7 +23,7 @@ const app = express();
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests from specified origins or no origin (e.g., Postman)
-        const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
+        const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173', "https://app7000.maayn.me"];
 
         // Allow requests with no origin (mobile apps, postman, etc.)
         if (!origin) return callback(null, true);
@@ -99,7 +99,7 @@ app.use('/webhook', webhookRoute);
 
 // Start server
 const PORT = process.env.PORT;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
     connectDB();
 });

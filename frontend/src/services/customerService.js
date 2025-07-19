@@ -4,6 +4,7 @@ export const customerService = {
   // Get all customers with pagination and filtering
   getAllCustomers: async (params = {}) => {
     const response = await api.get('/customer', { params });
+    console.log("Fetched all customers:", response);
     return response.data;
   },
 

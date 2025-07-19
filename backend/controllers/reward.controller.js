@@ -565,7 +565,7 @@ const applyRewardToCustomer = async (req, res) => {
         }
 
         // Generate coupon without deducting points yet
-        const code = generateCouponCode(reward.rewardType.toUpperCase().slice(0, 4));
+        const code = await generateCouponCode(reward.rewardType.toUpperCase().slice(0, 4), process.env.SALLA_API_TOKEN);
         const expiresAt = reward.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // default 7 days
 
         const coupon = new Coupon({

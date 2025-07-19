@@ -56,6 +56,7 @@ const getCustomerById = async (req, res) => {
 }
 
 const getCustomers = async (req, res) => {
+    console.log("Enter get customers api...");
     const merchant = req.merchant; // Assuming you pass merchantId as a query parameter
 
     if (!merchant) {
@@ -72,6 +73,7 @@ const getCustomers = async (req, res) => {
             customers
         });
     } catch (error) {
+        console.log("\nThere is an error\n")
         console.error('Error fetching customers:', error.message);
         res.status(500).json({ message: 'Something went wrong' });
     }

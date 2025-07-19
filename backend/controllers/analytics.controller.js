@@ -9,6 +9,7 @@ const Merchant = require('../models/merchant.model');
  * GET /api/analytics/dashboard
  */
 const getDashboardAnalytics = async (req, res) => {
+    console.log("Get dashboard analytics request received");
     try {
         const merchant = req.merchant;
 

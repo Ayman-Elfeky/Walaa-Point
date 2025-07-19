@@ -67,6 +67,7 @@ const Customers = () => {
     try {
       setLoading(true);
       const response = await customerService.getAllCustomers();
+      console.log('response: ',response)
       setCustomers(response.customers || []);
     } catch (error) {
       console.error('Error fetching customers:', error);

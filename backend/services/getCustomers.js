@@ -20,7 +20,7 @@ const getCustomers = async (accessToken, options = {}) => {
     }
 };
 
-// getCustomers('ory_at_t8ADUGaU2kuJJwgh5PwdfNTaouOt-0dsynva2q390zI.HhvgFM_SKtQfxuvItqJXjBuFoPzahfo9S2l0vk08pFk')
+// getCustomers('ory_at_k7GhIgYubx5f6909yOQOIZg0lMfvuNPy_1JKMCW1qlk.6lvqf8lA9xmiko5uiQ5qbZkRL_rih3XrY89st_zqAME')
 // .then(customers => {
 //     console.log('\nCustomers:', customers, '\n');
 // })

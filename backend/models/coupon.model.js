@@ -43,6 +43,10 @@ const couponSchema = new mongoose.Schema({
         type: String // optional: link to Salla or your order system
     },
 
+    sallaOrderId: {
+        type: String // optional: link to Salla order ID if applicable
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

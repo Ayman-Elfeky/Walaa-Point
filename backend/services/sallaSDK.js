@@ -1,5 +1,6 @@
 const SallaAPIFactory = require('@salla.sa/passport-strategy');
 const axios = require('axios');
+require('dotenv').config({path: '../.env'});
 
 class SallaSDKService {
     constructor() {
@@ -13,7 +14,7 @@ class SallaSDKService {
         this.api = new SallaAPIFactory({
             clientID: process.env.SALLA_CLIENT_ID,
             clientSecret: process.env.SALLA_CLIENT_SECRET,
-            callbackURL: process.env.SALLA_CALLBACK_URL || 'http://localhost:5000/webhook',
+            callbackURL: process.env.SALLA_CALLBACK_URL || 'http://localhost:3000/webhook',
         });
     }
 
@@ -68,12 +69,14 @@ class SallaSDKService {
      */
     async getMerchantInfo(accessToken) {
         try {
-            const response = await axios.get(`${this.accountsURL}/oauth2/user/info`, {
+            const response = await axios.get(`${this.baseURL}/admin/v2/oauth2/user/info`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Accept': 'application/json'
                 }
             });
+
+            console.log('Merchant info from sallaSDK:', response.data);
 
             return response.data;
         } catch (error) {
@@ -264,6 +267,105 @@ class SallaSDKService {
             return response.data;
         } catch (error) {
             console.error('❌ Error fetching store info:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Create a new coupon
+     */
+    // async createCoupon(accessToken, couponData) {
+    //     try {
+    //         const response = await axios.post(`${this.baseURL}/admin/v2/coupons`, couponData, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${accessToken}`,
+    //                 'Accept': 'application/json',
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+
+    //         return response.data;
+    //     } catch (error) {
+    //         console.error('❌ Error creating coupon:', error.response?.data || error.message);
+    //         throw error;
+    //     }
+    // }
+
+    /**
+     * Get all coupons
+     */
+    async getCoupons(accessToken, options = {}) {
+        try {
+            const response = await axios.get(`${this.baseURL}/admin/v2/coupons`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/json'
+                },
+                // params: options
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error fetching coupons:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Get coupon by ID
+     */
+    async getCouponById(accessToken, couponId) {
+        try {
+            const response = await axios.get(`${this.baseURL}/admin/v2/coupons/${couponId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error fetching coupon by ID:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * update coupon by ID
+     */
+    async updateCouponById(accessToken, couponId, couponData) {
+        try {
+            const response = await axios.put(`${this.baseURL}/admin/v2/coupons/${couponId}`, couponData, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error updating coupon by ID:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete coupon by ID
+     */
+    async deleteCouponById(accessToken, couponId) {
+        try {
+            const response = await axios.delete(`${this.baseURL}/admin/v2/coupons/${couponId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error deleting coupon by ID:', error.response?.data || error.message);
             throw error;
         }
     }

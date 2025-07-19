@@ -7,13 +7,16 @@ const loyaltyEngine = require('../services/loyalityEngine');
 const Customer = require('../models/customer.model');
 
 const webhookLogic = (req, res) => {
+    console.log("\nEnter...\n")
     const { event } = req.body;
+
+    console.log(`\n🔔 Webhook Event Received from webhookLogic: ${event}`);
 
     console.log(`🔄 Processing webhook event: ${event}`);
 
     switch (event) {
-        case 'app.installed':
-            return onAppInstalled(req, res);
+        // case 'app.installed':
+        // return onAppInstalled(req, res);
         case 'app.uninstalled':
             return onAppUninstalled(req, res);
         case 'app.store.authorize':
@@ -39,10 +42,10 @@ const webhookLogic = (req, res) => {
             return onProductUpdated(req, res);
         default:
             console.warn(`⚠️  Unknown webhook event: ${event}`);
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Unknown event type',
                 event: event,
-                message: 'This event type is not supported' 
+                message: 'This event type is not supported'
             });
     }
 };
@@ -218,8 +221,14 @@ const onReviewAdded = async (req, res) => {
 const onStoreAuthorize = async (req, res) => {
     try {
         const { data } = req.body;
+        console.log('data: ', data);
         const merchantDetails = await fetchMerchantDetails(data.access_token);
+        const email = merchantDetails?.data?.email;
 
+        if (!email) {
+            console.error("❌ Missing merchant email. Skipping merchant creation.");
+            return res.status(400).json({ message: 'Merchant email is required' });
+        }
         const randomPassword = generateSecurePassword();
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
@@ -246,10 +255,12 @@ const onStoreAuthorize = async (req, res) => {
         });
 
         await newMerchant.save();
+        console.log(`\nStore authorized and saved: ${newMerchant.merchantName} (${newMerchant.merchantId})\n`);
 
         const emailHtml = randomPasswordTemplate(merchantDetails.data.email, randomPassword);
         try {
             await sendEmail(merchantDetails.data.email, 'Welcome to Loyalty - مرحباً بك في لويالتي', emailHtml);
+            console.log(`\nWelcome email sent to ${merchantDetails.data.email}\n`);
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
         }
@@ -267,11 +278,14 @@ const onAppInstalled = async (req, res) => {
 };
 
 const onAppUninstalled = async (req, res) => {
+    console.log("Enter onAppUninstalled...\n");
+    
     try {
         const { merchant } = req.body;
+        console.log("Merchant will be deleted: ", merchant);
         const deleted = await Merchant.findOneAndDelete({ merchantId: merchant });
         if (!deleted) return res.status(404).json({ message: 'Merchant not found' });
-
+        console.log(`\nApp uninstalled successfully for merchant: ${merchant}\n`);
         res.status(200).json({ message: 'App uninstalled successfully' });
     } catch (error) {
         console.error('Error during uninstall:', error);
@@ -283,7 +297,7 @@ const onOrderUpdated = async (req, res) => {
     try {
         console.log('🔄 Order updated webhook received');
         const { merchant: merchantId, data } = req.body;
-        
+
         const merchant = await Merchant.findOne({ merchantId });
         if (!merchant) {
             return res.status(404).json({ message: 'Merchant not found' });
@@ -291,10 +305,10 @@ const onOrderUpdated = async (req, res) => {
 
         // Log the order update for analytics
         console.log(`📦 Order ${data.id} updated for merchant ${merchantId}`);
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Order update processed successfully',
-            orderId: data.id 
+            orderId: data.id
         });
     } catch (error) {
         console.error('❌ Error processing order update:', error);
@@ -306,16 +320,16 @@ const onCustomerCreated = async (req, res) => {
     try {
         console.log('👤 Customer created webhook received');
         const { merchant: merchantId, data } = req.body;
-        
+
         const merchant = await Merchant.findOne({ merchantId });
         if (!merchant) {
             return res.status(404).json({ message: 'Merchant not found' });
         }
 
         // Check if customer already exists
-        let customer = await Customer.findOne({ 
-            customerId: data.id, 
-            merchant: merchant._id 
+        let customer = await Customer.findOne({
+            customerId: data.id,
+            merchant: merchant._id
         });
 
         if (!customer) {
@@ -344,9 +358,9 @@ const onCustomerCreated = async (req, res) => {
             console.log(`✅ New customer created: ${customer.name || customer.customerId}`);
         }
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'Customer creation processed successfully',
-            customerId: data.id 
+            customerId: data.id
         });
     } catch (error) {
         console.error('❌ Error processing customer creation:', error);
@@ -358,7 +372,7 @@ const onProductUpdated = async (req, res) => {
     try {
         console.log('🛍️ Product updated webhook received');
         const { merchant: merchantId, data } = req.body;
-        
+
         const merchant = await Merchant.findOne({ merchantId });
         if (!merchant) {
             return res.status(404).json({ message: 'Merchant not found' });
@@ -366,10 +380,10 @@ const onProductUpdated = async (req, res) => {
 
         // Log the product update for analytics
         console.log(`📦 Product ${data.id} updated for merchant ${merchantId}`);
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Product update processed successfully',
-            productId: data.id 
+            productId: data.id
         });
     } catch (error) {
         console.error('❌ Error processing product update:', error);
@@ -381,16 +395,16 @@ const onOrderDeleted = async (req, res) => {
     try {
         console.log('🗑️ Order deleted webhook received');
         const { merchant: merchantId, data } = req.body;
-        
+
         const merchant = await Merchant.findOne({ merchantId });
         if (!merchant) {
             return res.status(404).json({ message: 'Merchant not found' });
         }
 
         // Find the customer associated with this deleted order
-        const customer = await Customer.findOne({ 
-            customerId: data.customer_id, 
-            merchant: merchant._id 
+        const customer = await Customer.findOne({
+            customerId: data.customer_id,
+            merchant: merchant._id
         });
 
         if (!customer) {
@@ -401,15 +415,15 @@ const onOrderDeleted = async (req, res) => {
         // Handle points deduction for deleted order
         // Only deduct points if the order had awarded points previously
         if (data.total && data.total > 0) {
-            const metadata = { 
-                orderId: data.id, 
-                amount: data.total, 
-                reason: 'order_deleted' 
+            const metadata = {
+                orderId: data.id,
+                amount: data.total,
+                reason: 'order_deleted'
             };
 
             // Calculate points that should be deducted
             const pointsToDeduct = Math.floor(data.total * (merchant.loyaltySettings?.pointsPerCurrency || 1));
-            
+
             if (pointsToDeduct > 0 && customer.loyaltyPoints >= pointsToDeduct) {
                 // Deduct points using loyalty engine
                 await loyaltyEngine({
@@ -428,10 +442,10 @@ const onOrderDeleted = async (req, res) => {
         }
 
         console.log(`🗑️ Order ${data.id} deleted for merchant ${merchantId}`);
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Order deletion processed successfully',
-            orderId: data.id 
+            orderId: data.id
         });
     } catch (error) {
         console.error('❌ Error processing order deletion:', error);
@@ -443,16 +457,16 @@ const onOrderRefunded = async (req, res) => {
     try {
         console.log('💰 Order refunded webhook received');
         const { merchant: merchantId, data } = req.body;
-        
+
         const merchant = await Merchant.findOne({ merchantId });
         if (!merchant) {
             return res.status(404).json({ message: 'Merchant not found' });
         }
 
         // Find the customer associated with this refunded order
-        const customer = await Customer.findOne({ 
-            customerId: data.customer_id, 
-            merchant: merchant._id 
+        const customer = await Customer.findOne({
+            customerId: data.customer_id,
+            merchant: merchant._id
         });
 
         if (!customer) {
@@ -462,18 +476,18 @@ const onOrderRefunded = async (req, res) => {
 
         // Handle points deduction for refunded order
         const refundAmount = data.refund_amount || data.total || 0;
-        
+
         if (refundAmount > 0) {
-            const metadata = { 
-                orderId: data.id, 
+            const metadata = {
+                orderId: data.id,
                 amount: refundAmount,
                 totalOrderAmount: data.total,
-                reason: 'order_refunded' 
+                reason: 'order_refunded'
             };
 
             // Calculate points that should be deducted based on refund amount
             const pointsToDeduct = Math.floor(refundAmount * (merchant.loyaltySettings?.pointsPerCurrency || 1));
-            
+
             if (pointsToDeduct > 0 && customer.loyaltyPoints >= pointsToDeduct) {
                 // Deduct points using loyalty engine
                 await loyaltyEngine({
@@ -492,8 +506,8 @@ const onOrderRefunded = async (req, res) => {
         }
 
         console.log(`💰 Order ${data.id} refunded for merchant ${merchantId}`);
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Order refund processed successfully',
             orderId: data.id,
             refundAmount: refundAmount

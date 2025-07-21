@@ -38,6 +38,7 @@ const webhookLogic = (req, res) => {
         case 'customer.created':
             return onCustomerCreated(req, res);
         case 'product.created':
+            return onProductCreated(req, res);
         case 'product.updated':
             return onProductUpdated(req, res);
         default:
@@ -364,6 +365,39 @@ const onCustomerCreated = async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error processing customer creation:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const onProductCreated = async (req, res) => {
+    try {
+        console.log('🛍️ Product created webhook received');
+        const { merchant: merchantId, data } = req.body;
+
+        // const merchant = await Merchant.findOne({ merchantId });
+        // if (!merchant) {
+        //     return res.status(404).json({ message: 'Merchant not found' });
+        // }
+
+        // // Create new product
+        // const product = new Product({
+        //     productId: data.id,
+        //     title: data.title,
+        //     description: data.description,
+        //     price: data.price,
+        //     merchant: merchant._id,
+        //     metadata: data
+        // });
+        // await product.save();
+
+        console.log(`✅ New product created: ${product.title || product.productId}`);
+
+        res.status(200).json({
+            message: 'Product creation processed successfully',
+            productId: data.id
+        });
+    } catch (error) {
+        console.error('❌ Error processing product creation:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };

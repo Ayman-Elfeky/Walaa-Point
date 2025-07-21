@@ -53,33 +53,51 @@ const webhookLogic = (req, res) => {
 
 const onOrderCreated = async (req, res) => {
     try {
+        console.log('📦 Order created webhook received');
         const { merchant: merchantId, data } = req.body;
-        const merchant = await Merchant.findOne({ merchantId });
-        const customer = await Customer.findOne({ customerId: data.customer_id, merchant: merchant._id });
 
-        if (!merchant || !customer) return res.status(404).json({ message: 'Merchant or Customer not found' });
+        console.log('Merchant ID:', merchantId);
+        console.log('Customer ID:', data.customer.id);
+        console.log('Order Total:', data.amounts.total.amount);
 
-        const metadata = { orderId: data.id, amount: data.total };
+        const merchantFound = await Merchant.findOne({ merchantId: merchantId });
+        const customer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });
 
+        if (!merchantFound || !customer) {
+            console.log('Merchant found:', !!merchantFound);
+            console.log('Customer found:', !!customer);
+            return res.status(404).json({ message: 'Merchant or Customer not found' });
+        }
+
+        const totalAmount = data.amounts.total.amount;
+        const metadata = {
+            orderId: data.id,
+            amount: totalAmount,
+            currency: data.currency,
+            referenceId: data.reference_id
+        };
+
+        console.log('Processing purchase points...');
         const result = await loyaltyEngine({
             event: 'purchase',
-            merchant,
+            merchant: merchantFound,
             customer,
             metadata
         });
 
-        if (merchant.loyaltySettings?.purchaseAmountThresholdPoints?.enabled && data.total >= merchant.loyaltySettings.purchaseAmountThresholdPoints.thresholdAmount) {
-            await loyaltyEngine({
-                event: 'purchaseAmountThresholdPoints',
-                merchant,
-                customer,
-                metadata
-            });
-        }
+        // Note: purchaseAmountThresholdPoints is handled automatically within the 'purchase' event
+        // in the loyalty engine, so we don't need to call it separately
 
-        res.status(200).json({ message: 'Order processed successfully', result });
+        console.log('✅ Order processed successfully');
+        res.status(200).json({
+            message: 'Order processed successfully',
+            result,
+            orderId: data.id,
+            customerId: data.customer.id,
+            amount: totalAmount
+        });
     } catch (error) {
-        console.error('Error processing order:', error);
+        console.error('❌ Error processing order:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -280,7 +298,7 @@ const onAppInstalled = async (req, res) => {
 
 const onAppUninstalled = async (req, res) => {
     console.log("Enter onAppUninstalled...\n");
-    
+
     try {
         const { merchant } = req.body;
         console.log("Merchant will be deleted: ", merchant);
@@ -374,23 +392,14 @@ const onProductCreated = async (req, res) => {
         console.log('🛍️ Product created webhook received');
         const { merchant: merchantId, data } = req.body;
 
-        // const merchant = await Merchant.findOne({ merchantId });
-        // if (!merchant) {
-        //     return res.status(404).json({ message: 'Merchant not found' });
-        // }
+        const merchant = await Merchant.findOne({ merchantId });
+        if (!merchant) {
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
 
-        // // Create new product
-        // const product = new Product({
-        //     productId: data.id,
-        //     title: data.title,
-        //     description: data.description,
-        //     price: data.price,
-        //     merchant: merchant._id,
-        //     metadata: data
-        // });
-        // await product.save();
-
-        console.log(`✅ New product created: ${product.title || product.productId}`);
+        // Log the product creation for analytics
+        console.log(`📦 Product ${data.id} created for merchant ${merchantId}`);
+        console.log(`✅ New product created: ${data.name || data.title || data.id}`);
 
         res.status(200).json({
             message: 'Product creation processed successfully',

@@ -28,6 +28,11 @@ const customerSchema = new mongoose.Schema({
     phone: { type: String },
     dateOfBirth: { type: Date },
 
+    orderCount: {
+        type: Number,
+        default: 0
+    },
+    
     points: {
         type: Number,
         default: 0

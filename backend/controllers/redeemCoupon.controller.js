@@ -67,6 +67,10 @@ const redeemCoupon = async (req, res) => {
             coupon.usedAt = new Date();
             if (orderId) coupon.usedOnOrderId = orderId;
 
+            // Update reward usage stats
+            reward.currentUsage = (reward.currentUsage || 0) + 1;
+            await reward.save({ session });
+
             // Save customer and coupon changes within transaction
             await customer.save({ session });
             await coupon.save({ session });
@@ -87,6 +91,34 @@ const redeemCoupon = async (req, res) => {
 
             // Commit the transaction
             await session.commitTransaction();
+
+            // Send notification to customer
+            try {
+                const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                const subjectArabic = 'تم استخدام كوبون مكافأة!';
+                const contentArabic = `تم استخدام كوبون مكافأة (${coupon.code}) بنجاح في متجر ${merchant.merchantName}`;
+                const contentEnglish = `Your reward coupon (${coupon.code}) was successfully redeemed at ${merchant.merchantName}`;
+                const emailHtml = require('../utils/templates/notification.template').notification(storeLink, contentArabic, contentEnglish, coupon.code);
+                if (customer.email) {
+                    await require('../utils/sendEmail').sendEmail(customer.email, subjectArabic, emailHtml);
+                }
+            } catch (notifyErr) {
+                console.error('Failed to send redemption notification to customer:', notifyErr.message);
+            }
+
+            // Send notification to admin
+            try {
+                const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                const emailHtml = require('../utils/templates/notification.template').notification(
+                    storeLink,
+                    `تم استخدام كوبون مكافأة للعميل ${customer.name || customer.email}: ${coupon.code}`,
+                    `A reward coupon was redeemed for customer ${customer.name || customer.email}: ${coupon.code}`,
+                    coupon.code
+                );
+                await require('../utils/sendEmail').sendEmail('aywork73@gmail.com', 'Reward Coupon Redeemed', emailHtml);
+            } catch (err) {
+                console.error('Failed to notify admin about coupon redemption:', err.message);
+            }
 
             console.log(`\nReward redeemed successfully for customer ${customer.name || customer.customerId}\n`);
             console.log(`\nReward: ${reward.rewardType} (${reward.rewardValue})\n`);

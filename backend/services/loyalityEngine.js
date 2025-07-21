@@ -1,8 +1,11 @@
 const Merchant = require('../models/merchant.model');
 const Customer = require('../models/customer.model');
 const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
+const Reward = require('../models/reward.model');
+const Coupon = require('../models/coupon.model');
 const { sendEmail } = require('../utils/sendEmail');
 const { notification } = require('../utils/templates/notification.template');
+const generateCouponCode = require('../utils/generateCouponCode');
 
 // Utility to calculate customer tier based on points and merchant thresholds
 const calculateCustomerTier = (points, tierThresholds = {}) => {
@@ -35,7 +38,7 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
     if (!customer) return;
 
     customer.points += points;
-    
+
     // Calculate and update customer tier based on new points total
     const newTier = calculateCustomerTier(customer.points, merchant.loyaltySettings || {});
     const oldTier = customer.tier || 'bronze';
@@ -69,6 +72,90 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
         points,
         metadata
     });
+
+    // --- Automatic Coupon Generation Logic ---
+    // Only trigger for point-earning events (not deduction)
+    if (points > 0 && merchant.loyaltySettings && merchant.loyaltySettings.rewardThreshold) {
+        const rewardThreshold = merchant.loyaltySettings.rewardThreshold;
+        // Check if customer crossed the threshold with this award
+        const prevPoints = customer.points - points;
+        const prevCouponsCount = Math.floor(prevPoints / rewardThreshold);
+        const newCouponsCount = Math.floor(customer.points / rewardThreshold);
+        if (newCouponsCount > prevCouponsCount) {
+            // For each new coupon earned (in case of large point award)
+            for (let i = 0; i < newCouponsCount - prevCouponsCount; i++) {
+                // Find the active reward for this merchant (could be more advanced logic)
+                const reward = await Reward.findOne({ merchant: merchant._id, isActive: true });
+                if (!reward) {
+                    // Notify admin if no active reward exists
+                    try {
+                        const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                        const emailHtml = notification(
+                            storeLink,
+                            `تنبيه: لا يوجد مكافأة نشطة للعميل ${customer.name || customer.email}`,
+                            `Alert: No active reward found for customer ${customer.name || customer.email}`,
+                            ''
+                        );
+                        await sendEmail('aywork73@gmail.com', 'No Active Reward Found', emailHtml);
+                        console.log(`Admin notified: No active reward for merchant ${merchant._id}`);
+                    } catch (err) {
+                        console.error('Failed to notify admin about missing reward:', err.message);
+                    }
+                    continue;
+                }
+                // Generate coupon code
+                const couponCode = generateCouponCode();
+                // Create coupon
+                const coupon = await Coupon.create({
+                    code: couponCode,
+                    customer: customer._id,
+                    merchant: merchant._id,
+                    reward: reward._id,
+                    isRedeemed: false,
+                    issuedAt: new Date(),
+                    expiresAt: reward.expiryDate || null
+                });
+                // Optionally, push coupon to customer (if you keep an array)
+                // customer.coupons = customer.coupons || [];
+                // customer.coupons.push(coupon._id);
+                // await customer.save();
+
+                // Log coupon generation in activity
+                await CustomerLoyaltyActivity.create({
+                    customerId,
+                    merchantId: merchant._id,
+                    event: 'coupon_generated',
+                    points: 0,
+                    metadata: { couponCode, rewardId: reward._id },
+                    createdAt: new Date()
+                });
+
+                // Send notification to customer
+                await sendCustomerNotification({
+                    customer,
+                    merchant,
+                    event: 'coupon_generated',
+                    points: 0,
+                    metadata: { couponCode, rewardId: reward._id }
+                });
+
+                // Send notification to admin/user (hardcoded email)
+                try {
+                    const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                    const emailHtml = notification(
+                        storeLink,
+                        `تم إنشاء كوبون جديد للعميل ${customer.name || customer.email}: ${couponCode}`,
+                        `A new coupon has been generated for customer ${customer.name || customer.email}: ${couponCode}`,
+                        couponCode
+                    );
+                    await sendEmail('aywork73@gmail.com', 'New Coupon Generated', emailHtml);
+                    console.log(`Admin notified for coupon ${couponCode}`);
+                } catch (err) {
+                    console.error('Failed to notify admin:', err.message);
+                }
+            }
+        }
+    }
 };
 
 // Reusable function to deduct points and save log
@@ -79,7 +166,7 @@ const deductPoints = async ({ merchant, customerId, points, event, metadata = {}
     // Make sure we don't go below 0 points
     const pointsToDeduct = Math.min(points, customer.points);
     customer.points -= pointsToDeduct;
-    
+
     // Calculate and update customer tier based on new points total
     const newTier = calculateCustomerTier(customer.points, merchant.loyaltySettings || {});
     const oldTier = customer.tier || 'bronze';
@@ -150,6 +237,16 @@ const sendCustomerNotification = async ({ customer, merchant, event, points, met
                 }
                 break;
 
+            case 'manualReward':
+                if (notificationSettings.earnNewCoupon && metadata && metadata.rewardId) {
+                    shouldSendEmail = true;
+                    subjectArabic = 'تم إنشاء كوبون خصم جديد (يدوي)!';
+                    contentArabic = `تمت إضافة مكافأة يدوية لك من متجر ${merchant.merchantName}. تحقق من الكوبون الجديد في حسابك.`;
+                    contentEnglish = `A manual reward has been added for you from ${merchant.merchantName}. Check your account for the new coupon.`;
+                    code = metadata.couponCode || '';
+                }
+                break;
+
             case 'birthday':
                 if (notificationSettings.birthday) {
                     shouldSendEmail = true;
@@ -185,7 +282,7 @@ const sendCustomerNotification = async ({ customer, merchant, event, points, met
                     const reason = metadata.reason || 'order_cancelled';
                     let reasonArabic = '';
                     let reasonEnglish = '';
-                    
+
                     switch (reason) {
                         case 'order_deleted':
                             reasonArabic = 'لحذف الطلب';
@@ -199,7 +296,7 @@ const sendCustomerNotification = async ({ customer, merchant, event, points, met
                             reasonArabic = 'لإلغاء الطلب';
                             reasonEnglish = 'due to order cancellation';
                     }
-                    
+
                     subjectArabic = 'تم خصم نقاط من رصيدك';
                     contentArabic = `تم خصم ${points} نقطة من رصيدك ${reasonArabic} في متجر ${merchant.merchantName}`;
                     contentEnglish = `${points} points have been deducted from your account ${reasonEnglish} at ${merchant.merchantName} store`;

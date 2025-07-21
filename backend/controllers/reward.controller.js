@@ -14,14 +14,14 @@ const generateCouponCode = require('../utils/generateCouponCode');
 const createReward = async (req, res) => {
     try {
         const merchant = req.merchant;
-        const { 
-            name, 
-            nameEn, 
-            description, 
-            descriptionEn, 
-            pointsRequired, 
-            rewardType, 
-            rewardValue, 
+        const {
+            name,
+            nameEn,
+            description,
+            descriptionEn,
+            pointsRequired,
+            rewardType,
+            rewardValue,
             minOrderValue,
             maxUsagePerCustomer,
             maxTotalUsage,
@@ -206,9 +206,9 @@ const getRewardById = async (req, res) => {
             reward: reward._id,
             merchant: merchant._id
         })
-        .populate('customer', 'name email phone customerId')
-        .sort({ createdAt: -1 })
-        .limit(10);
+            .populate('customer', 'name email phone customerId')
+            .sort({ createdAt: -1 })
+            .limit(10);
 
         res.status(200).json({
             success: true,
@@ -508,7 +508,7 @@ const generateShareableLink = async (req, res) => {
 
 const applyRewardToCustomer = async (req, res) => {
     try {
-        console.log('\nApplying reward to customer\n');
+        console.log('\nApplying reward to customer (manual flow, now using loyaltyEngine)\n');
         console.log('\nRequest body:', JSON.stringify(req.body, null, 2), '\n');
 
         const { customerId, rewardType } = req.body;
@@ -532,10 +532,7 @@ const applyRewardToCustomer = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Reward not found' });
         }
 
-        console.log(`\nCustomer found: ${customer.name || customer.customerId}\n`);
-        console.log(`\nReward found: ${reward.rewardType} (${reward.rewardValue})\n`);
-
-        if (!reward.enabled) {
+        if (!reward.enabled && !reward.isActive) {
             console.log('\nReward is not active\n');
             return res.status(400).json({ success: false, message: 'Reward is not active' });
         }
@@ -564,67 +561,21 @@ const applyRewardToCustomer = async (req, res) => {
             });
         }
 
-        // Generate coupon without deducting points yet
-        const code = await generateCouponCode(reward.rewardType.toUpperCase().slice(0, 4), process.env.SALLA_API_TOKEN);
-        const expiresAt = reward.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // default 7 days
-
-        const coupon = new Coupon({
-            code,
-            reward: reward._id,
-            customer: customer._id,
-            merchant: merchant._id,
-            expiresAt
-        });
-
-        await coupon.save();
-
-        // Log the coupon generation activity
-        await CustomerLoyaltyActivity.create({
-            customerId: customer._id,
-            merchantId: merchant._id,
-            event: 'coupon_generated',
-            points: 0, // No points change yet, just coupon generation
+        // Use loyaltyEngine to process manual reward application for consistency
+        await loyaltyEngine({
+            event: 'manualReward',
+            merchant,
+            customer,
             metadata: {
                 rewardType: reward.rewardType,
-                rewardValue: reward.rewardValue,
-                pointsRequired: reward.pointsRequired,
-                couponCode: coupon.code,
-                expiresAt: coupon.expiresAt
+                rewardId: reward._id,
+                manual: true
             }
         });
-
-        console.log(`\nCoupon generated for customer ${customer.name || customer.customerId}\n`);
-        console.log(`\nCoupon code: ${coupon.code}\n`);
-        console.log(`\nReward: ${reward.rewardType} (${reward.rewardValue})\n`);
-        console.log(`\nPoints required: ${reward.pointsRequired}\n`);
-
-        // Send notification email if enabled
-        if (merchant.notificationSettings?.earnNewCoupon && customer.email) {
-            try {
-                const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
-                const subjectArabic = 'تم إنشاء كوبون خصم جديد!';
-                const contentArabic = `تهانينا! تم إنشاء كوبون خصم جديد لك من متجر ${merchant.merchantName}`;
-                const contentEnglish = `Congratulations! A new discount coupon has been created for you from ${merchant.merchantName} store`;
-
-                const emailHtml = notification(storeLink, contentArabic, contentEnglish, coupon.code);
-                await sendEmail(customer.email, subjectArabic, emailHtml);
-
-                console.log(`\nCoupon notification email sent to ${customer.email}\n`);
-            } catch (emailError) {
-                console.error(`\nError sending coupon notification email: ${emailError.message}\n`);
-            }
-        }
 
         return res.status(200).json({
             success: true,
-            message: 'Coupon created successfully. Redeem to finalize reward.',
-            coupon: {
-                code: coupon.code,
-                expiresAt: coupon.expiresAt,
-                rewardType: reward.rewardType,
-                rewardValue: reward.rewardValue,
-                pointsRequired: reward.pointsRequired
-            }
+            message: 'Reward applied and coupon generated (if eligible) using loyalty engine.'
         });
 
     } catch (err) {

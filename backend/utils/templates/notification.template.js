@@ -6,7 +6,7 @@ module.exports.notification = (link, contentInAr, contentInEn, code = '') => {
             <p>${contentInAr}</p>
             <p>${contentInEn}</p>
             <p>${link}</p>
-            <div style="font-size:48px;">code: <span style="color:#2563eb">${code}</span></div>
+            ${code ? `<p style="font-weight:bold;">Code: ${code}</p>` : ''}
         </div>
     `;
     return htmlContent;

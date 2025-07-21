@@ -219,7 +219,7 @@ const sendCustomerNotification = async ({ customer, merchant, event, points, met
         // Prepare store link
         const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
 
-        // Generate email template
+        // Generate email templates
         const emailHtml = notification(storeLink, contentArabic, contentEnglish, code);
 
         // Send email

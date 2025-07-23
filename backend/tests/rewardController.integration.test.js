@@ -44,7 +44,7 @@ const Customer = require('../models/customer.model');
 const Merchant = require('../models/merchant.model');
 const Reward = require('../models/reward.model');
 const Coupon = require('../models/coupon.model');
-const { sendEmail } = require('../utils/sendEmail');
+const sendEmailModule = require('../utils/sendEmail');
 
 describe('Reward Controller Integration Tests', () => {
     let sandbox;
@@ -106,7 +106,7 @@ describe('Reward Controller Integration Tests', () => {
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         });
 
-        sandbox.stub(sendEmail, 'sendEmail').resolves();
+        sandbox.stub(sendEmailModule, 'sendEmail').resolves();
     });
 
     afterEach(() => {
@@ -127,7 +127,7 @@ describe('Reward Controller Integration Tests', () => {
             expect(res.body.message).to.include('successfully');
 
             // Verify email notification was sent
-            expect(sendEmail.sendEmail.calledWith('aywork73@gmail.com')).to.be.true;
+            expect(sendEmailModule.sendEmail.calledWith('aywork73@gmail.com')).to.be.true;
 
             // Verify coupon was created
             expect(Coupon.create.calledOnce).to.be.true;
@@ -263,10 +263,10 @@ describe('Reward Controller Integration Tests', () => {
             expect(res.status).to.equal(200);
 
             // Verify email was sent
-            expect(sendEmail.sendEmail.calledOnce).to.be.true;
+            expect(sendEmailModule.sendEmail.calledOnce).to.be.true;
 
             // Check email parameters
-            const emailCall = sendEmail.sendEmail.getCall(0);
+            const emailCall = sendEmailModule.sendEmail.getCall(0);
             expect(emailCall.args[0]).to.equal('aywork73@gmail.com'); // Customer email
             expect(emailCall.args[1]).to.be.a('string'); // Subject
             expect(emailCall.args[2]).to.be.a('string'); // HTML content
@@ -290,7 +290,7 @@ describe('Reward Controller Integration Tests', () => {
         });
 
         it('should handle email service failures', async () => {
-            sendEmail.sendEmail.rejects(new Error('Email service unavailable'));
+            sendEmailModule.sendEmail.rejects(new Error('Email service unavailable'));
 
             const res = await request(app)
                 .post('/api/rewards/apply')

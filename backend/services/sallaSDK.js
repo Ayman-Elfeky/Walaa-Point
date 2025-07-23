@@ -1,6 +1,6 @@
 const SallaAPIFactory = require('@salla.sa/passport-strategy');
 const axios = require('axios');
-require('dotenv').config({path: '../.env'});
+require('dotenv').config({ path: '../.env' });
 
 class SallaSDKService {
     constructor() {
@@ -51,7 +51,7 @@ class SallaSDKService {
             });
 
             const { access_token, refresh_token, expires_in } = response.data;
-            
+
             return {
                 accessToken: access_token,
                 refreshToken: refresh_token,
@@ -91,7 +91,7 @@ class SallaSDKService {
     async getCustomers(accessToken, options = {}) {
         try {
             const params = new URLSearchParams();
-            
+
             if (options.page) params.append('page', options.page);
             if (options.limit) params.append('limit', options.limit);
             if (options.search) params.append('search', options.search);
@@ -99,7 +99,7 @@ class SallaSDKService {
             if (options.date_to) params.append('date_to', options.date_to);
 
             const url = `${this.baseURL}/admin/v2/customers${params.toString() ? '?' + params.toString() : ''}`;
-            
+
             const response = await axios.get(url, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -139,7 +139,7 @@ class SallaSDKService {
     async getOrders(accessToken, options = {}) {
         try {
             const params = new URLSearchParams();
-            
+
             if (options.page) params.append('page', options.page);
             if (options.limit) params.append('limit', options.limit);
             if (options.status) params.append('status', options.status);
@@ -147,7 +147,7 @@ class SallaSDKService {
             if (options.date_to) params.append('date_to', options.date_to);
 
             const url = `${this.baseURL}/admin/v2/orders${params.toString() ? '?' + params.toString() : ''}`;
-            
+
             const response = await axios.get(url, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -187,7 +187,7 @@ class SallaSDKService {
     async getProducts(accessToken, options = {}) {
         try {
             const params = new URLSearchParams();
-            
+
             if (options.page) params.append('page', options.page);
             if (options.limit) params.append('limit', options.limit);
             if (options.search) params.append('search', options.search);
@@ -195,7 +195,7 @@ class SallaSDKService {
             if (options.date_to) params.append('date_to', options.date_to);
 
             const url = `${this.baseURL}/admin/v2/products${params.toString() ? '?' + params.toString() : ''}`;
-            
+
             const response = await axios.get(url, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -404,7 +404,7 @@ class SallaSDKService {
      */
     async makeRequestWithRetry(accessToken, method, endpoint, data = null, maxRetries = 3) {
         let retries = 0;
-        
+
         while (retries < maxRetries) {
             try {
                 return await this.makeRequest(accessToken, method, endpoint, data);
@@ -419,10 +419,10 @@ class SallaSDKService {
                 }
             }
         }
-        
+
         throw new Error(`Max retries (${maxRetries}) exceeded`);
     }
 }
 
-// Export singleton instance
-module.exports = new SallaSDKService(); 
+// Export class instead of singleton to avoid immediate initialization
+module.exports = SallaSDKService; 

@@ -8,7 +8,7 @@ const Customer = require('../models/customer.model');
 const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
 const Reward = require('../models/reward.model');
 const Coupon = require('../models/coupon.model');
-const { sendEmail } = require('../utils/sendEmail');
+const sendEmailModule = require('../utils/sendEmail');
 
 describe('Loyalty Engine Integration Tests', () => {
     let merchantStub, customerStub, loyaltyActivityStub, rewardStub, couponStub, sendEmailStub;
@@ -91,7 +91,7 @@ describe('Loyalty Engine Integration Tests', () => {
             merchant: mockMerchant._id,
             reward: mockReward._id
         });
-        sendEmailStub = sinon.stub(sendEmail, 'sendEmail').resolves();
+        sendEmailStub = sinon.stub(sendEmailModule, 'sendEmail').resolves();
     });
 
     afterEach(() => {

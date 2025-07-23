@@ -333,9 +333,12 @@ const sendCustomerNotification = async ({ customer, merchant, event, points, met
 const LoyaltyEngine = {
     async processEvent({ event, customerId, merchantId, data = {} }) {
         const merchant = await Merchant.findById(merchantId);
-        if (!merchant || !merchant.loyaltySettings) return;
+        if (!merchant || !merchant.loyaltySettings) {
+            return { success: false, message: 'Merchant not found or loyalty settings not configured' };
+        }
 
         const loyalty = merchant.loyaltySettings;
+        let result = { success: true, event, customerId, pointsAwarded: 0, activities: [] };
 
         switch (event) {
             case 'purchase':
@@ -344,68 +347,99 @@ const LoyaltyEngine = {
                     const points = calculatePurchasePoints(amount, loyalty.pointsPerCurrencyUnit || 1);
                     if (points > 0) {
                         await awardPoints({ merchant, customerId, points, event: 'purchase', metadata: { amount, orderId: data.orderId } });
+                        result.pointsAwarded += points;
+                        result.activities.push({ type: 'purchase_points', points, amount });
                     }
                 }
 
                 if (loyalty.purchaseAmountThresholdPoints?.enabled) {
                     const thresholdAmount = loyalty.purchaseAmountThresholdPoints.thresholdAmount;
                     if (data.amount >= thresholdAmount) {
+                        const thresholdPoints = loyalty.purchaseAmountThresholdPoints.points;
                         await awardPoints({
                             merchant,
                             customerId,
-                            points: loyalty.purchaseAmountThresholdPoints.points,
+                            points: thresholdPoints,
                             event: 'purchaseThreshold',
                             metadata: { amount: data.amount, orderId: data.orderId }
                         });
+                        result.pointsAwarded += thresholdPoints;
+                        result.activities.push({ type: 'threshold_bonus', points: thresholdPoints, threshold: thresholdAmount });
                     }
                 }
                 break;
 
             case 'feedback':
+            case 'feedbackShippingPoints': // Alias for feedback
                 if (loyalty.feedbackShippingPoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.feedbackShippingPoints.points, event: 'feedback', metadata: data });
+                    const points = loyalty.feedbackShippingPoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'feedback', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'feedback', points });
                 }
                 break;
 
             case 'birthday':
                 if (loyalty.birthdayPoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.birthdayPoints.points, event: 'birthday', metadata: data });
+                    const points = loyalty.birthdayPoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'birthday', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'birthday', points });
                 }
                 break;
 
             case 'rating':
-                if (loyalty.ratingAppPoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.ratingAppPoints.points, event: 'rating', metadata: data });
+            case 'ratingProductPoints': // Alias for rating
+                if (loyalty.ratingProductPoints?.enabled) {
+                    const points = loyalty.ratingProductPoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'rating', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'product_rating', points });
                 }
                 break;
 
             case 'profileCompletion':
                 if (loyalty.profileCompletionPoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.profileCompletionPoints.points, event: 'profileCompletion', metadata: data });
+                    const points = loyalty.profileCompletionPoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'profileCompletion', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'profile_completion', points });
                 }
                 break;
 
             case 'repeatPurchase':
                 if (loyalty.repeatPurchasePoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.repeatPurchasePoints.points, event: 'repeatPurchase', metadata: data });
+                    const points = loyalty.repeatPurchasePoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'repeatPurchase', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'repeat_purchase', points });
                 }
                 break;
 
             case 'welcome':
                 if (loyalty.welcomePoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.welcomePoints.points, event: 'welcome', metadata: data });
+                    const points = loyalty.welcomePoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'welcome', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'welcome', points });
                 }
                 break;
 
             case 'installApp':
                 if (loyalty.installAppPoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.installAppPoints.points, event: 'installApp', metadata: data });
+                    const points = loyalty.installAppPoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'installApp', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'install_app', points });
                 }
                 break;
 
             case 'shareReferral':
                 if (loyalty.shareReferralPoints?.enabled) {
-                    await awardPoints({ merchant, customerId, points: loyalty.shareReferralPoints.points, event: 'shareReferral', metadata: data });
+                    const points = loyalty.shareReferralPoints.points;
+                    await awardPoints({ merchant, customerId, points, event: 'shareReferral', metadata: data });
+                    result.pointsAwarded = points;
+                    result.activities.push({ type: 'share_referral', points });
                 }
                 break;
 
@@ -413,23 +447,151 @@ const LoyaltyEngine = {
                 const pointsToDeduct = data.pointsDeducted || 0;
                 if (pointsToDeduct > 0) {
                     await deductPoints({ merchant, customerId, points: pointsToDeduct, event: 'pointsDeduction', metadata: data });
+                    result.pointsAwarded = -pointsToDeduct; // Negative to indicate deduction
+                    result.activities.push({ type: 'points_deduction', points: -pointsToDeduct, reason: data.reason });
                 }
                 break;
 
             default:
                 console.log(`\n\nUnknown event: ${event}\n\n`);
+                result.success = false;
+                result.message = `Unknown event: ${event}`;
         }
+
+        return result;
     }
 };
 
 // Wrapper function to match the interface used in controllers
 const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }) => {
-    return await LoyaltyEngine.processEvent({
-        event,
-        customerId: customer._id,
-        merchantId: merchant._id,
-        data: metadata
-    });
+    // Use the merchant and customer objects directly instead of fetching from DB
+    if (!merchant || !merchant.loyaltySettings) {
+        return { success: false, message: 'Merchant not found or loyalty settings not configured' };
+    }
+
+    const loyalty = merchant.loyaltySettings;
+    const customerId = customer._id;
+    let result = { success: true, event, customerId, pointsAwarded: 0, activities: [] };
+
+    switch (event) {
+        case 'purchase':
+            if (loyalty.purchasePoints?.enabled) {
+                const amount = metadata.amount || 0;
+                const points = calculatePurchasePoints(amount, loyalty.pointsPerCurrencyUnit || 1);
+                if (points > 0) {
+                    await awardPoints({ merchant, customerId, points, event: 'purchase', metadata: { amount, orderId: metadata.orderId } });
+                    result.pointsAwarded += points;
+                    result.activities.push({ type: 'purchase_points', points, amount });
+                }
+            }
+
+            if (loyalty.purchaseAmountThresholdPoints?.enabled) {
+                const thresholdAmount = loyalty.purchaseAmountThresholdPoints.thresholdAmount;
+                if (metadata.amount >= thresholdAmount) {
+                    const thresholdPoints = loyalty.purchaseAmountThresholdPoints.points;
+                    await awardPoints({
+                        merchant,
+                        customerId,
+                        points: thresholdPoints,
+                        event: 'purchaseThreshold',
+                        metadata: { amount: metadata.amount, orderId: metadata.orderId }
+                    });
+                    result.pointsAwarded += thresholdPoints;
+                    result.activities.push({ type: 'threshold_bonus', points: thresholdPoints, threshold: thresholdAmount });
+                }
+            }
+            break;
+
+        case 'feedback':
+        case 'feedbackShippingPoints': // Alias for feedback
+            if (loyalty.feedbackShippingPoints?.enabled) {
+                const points = loyalty.feedbackShippingPoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'feedback', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'feedback', points });
+            }
+            break;
+
+        case 'birthday':
+            if (loyalty.birthdayPoints?.enabled) {
+                const points = loyalty.birthdayPoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'birthday', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'birthday', points });
+            }
+            break;
+
+        case 'rating':
+        case 'ratingProductPoints': // Alias for rating
+            if (loyalty.ratingProductPoints?.enabled) {
+                const points = loyalty.ratingProductPoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'rating', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'product_rating', points });
+            }
+            break;
+
+        case 'profileCompletion':
+            if (loyalty.profileCompletionPoints?.enabled) {
+                const points = loyalty.profileCompletionPoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'profileCompletion', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'profile_completion', points });
+            }
+            break;
+
+        case 'repeatPurchase':
+            if (loyalty.repeatPurchasePoints?.enabled) {
+                const points = loyalty.repeatPurchasePoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'repeatPurchase', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'repeat_purchase', points });
+            }
+            break;
+
+        case 'welcome':
+            if (loyalty.welcomePoints?.enabled) {
+                const points = loyalty.welcomePoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'welcome', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'welcome', points });
+            }
+            break;
+
+        case 'installApp':
+            if (loyalty.installAppPoints?.enabled) {
+                const points = loyalty.installAppPoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'installApp', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'install_app', points });
+            }
+            break;
+
+        case 'shareReferral':
+            if (loyalty.shareReferralPoints?.enabled) {
+                const points = loyalty.shareReferralPoints.points;
+                await awardPoints({ merchant, customerId, points, event: 'shareReferral', metadata });
+                result.pointsAwarded = points;
+                result.activities.push({ type: 'share_referral', points });
+            }
+            break;
+
+        case 'pointsDeduction':
+            const pointsToDeduct = metadata.pointsDeducted || 0;
+            if (pointsToDeduct > 0) {
+                await deductPoints({ merchant, customerId, points: pointsToDeduct, event: 'pointsDeduction', metadata });
+                result.pointsAwarded = -pointsToDeduct; // Negative to indicate deduction
+                result.activities.push({ type: 'points_deduction', points: -pointsToDeduct, reason: metadata.reason });
+            }
+            break;
+
+        default:
+            console.log(`\n\nUnknown event: ${event}\n\n`);
+            result.success = false;
+            result.message = `Unknown event: ${event}`;
+    }
+
+    return result;
 };
 
 module.exports = loyaltyEngineWrapper;

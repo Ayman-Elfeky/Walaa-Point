@@ -61,12 +61,50 @@ const onOrderCreated = async (req, res) => {
         console.log('Order Total:', data.amounts.total.amount);
 
         const merchantFound = await Merchant.findOne({ merchantId: merchantId });
-        const customer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });
 
-        if (!merchantFound || !customer) {
-            console.log('Merchant found:', !!merchantFound);
-            console.log('Customer found:', !!customer);
-            return res.status(404).json({ message: 'Merchant or Customer not found' });
+        if (!merchantFound) {
+            console.log('❌ Merchant not found:', merchantId);
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
+
+        let customer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });
+
+        if (!customer) {
+            console.log('👤 Customer not found, creating new customer:', data.customer.id);
+
+            // Create new customer from order data
+            customer = new Customer({
+                customerId: data.customer.id,
+                name: data.customer.full_name || null,
+                email: data.customer.email || null,
+                phone: data.customer.mobile || data.customer.phone || null,
+                merchant: merchantFound._id,
+                orderCount: 1, // This is their first order
+                metadata: data.customer // Store the full customer data from Salla
+            });
+
+            await customer.save();
+            console.log('✅ New customer created:', customer.customerId);
+
+            // Award welcome points if enabled for new customers
+            if (merchantFound.loyaltySettings?.welcomePoints?.enabled) {
+                try {
+                    await loyaltyEngine({
+                        event: 'welcome',
+                        merchant: merchantFound,
+                        customer,
+                        metadata: { source: 'order_created_webhook' }
+                    });
+                    console.log('🎉 Welcome points awarded to new customer');
+                } catch (welcomeError) {
+                    console.error('❌ Error awarding welcome points:', welcomeError);
+                    // Don't fail the order processing if welcome points fail
+                }
+            }
+        } else {
+            // Update order count for existing customer
+            customer.orderCount = (customer.orderCount || 0) + 1;
+            await customer.save();
         }
 
         const totalAmount = data.amounts.total.amount;
@@ -561,11 +599,12 @@ const onOrderRefunded = async (req, res) => {
     }
 };
 
-const sallaSDK = require('../services/sallaSDK');
+const SallaSDKService = require('../services/sallaSDK');
 
 const fetchMerchantDetails = async (accessToken) => {
     try {
         console.log('🔍 Fetching merchant details with SDK...');
+        const sallaSDK = new SallaSDKService();
         const data = await sallaSDK.getMerchantInfo(accessToken);
         console.log('✅ Merchant details fetched successfully');
         return data;

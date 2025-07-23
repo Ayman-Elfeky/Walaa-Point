@@ -3,6 +3,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const express = require('express');
 const crypto = require('crypto');
+require('dotenv').config({ path: '../.env' });
 
 // Import the actual server modules
 const webhookRoute = require('../routes/webhook.route');
@@ -254,12 +255,12 @@ describe('Webhook E2E Tests - Complete Flow', () => {
 
             // Setup database mocks
             sandbox.stub(Merchant, 'findOne').resolves(mockMerchant);
-            
+
             // For customer creation, first call returns null (doesn't exist), second returns created customer
             const customerStub = sandbox.stub(Customer, 'findOne');
             customerStub.onFirstCall().resolves(null);
             customerStub.onSecondCall().resolves(mockCustomer);
-            
+
             sandbox.stub(Customer.prototype, 'save').resolves(mockCustomer);
             sandbox.stub(CustomerLoyaltyActivity, 'create').resolves({});
             sandbox.stub(sendEmail, 'sendEmail').resolves();
@@ -349,10 +350,10 @@ describe('Webhook E2E Tests - Complete Flow', () => {
                 .send(payload);
 
             expect(res.status).to.equal(200);
-            
+
             // Verify coupon was created
             expect(Coupon.create.calledOnce).to.be.true;
-            
+
             // Verify multiple emails sent (customer + admin notification)
             expect(sendEmail.sendEmail.callCount).to.be.greaterThan(1);
         });

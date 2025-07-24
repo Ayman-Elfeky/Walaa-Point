@@ -33,9 +33,22 @@ const customerSchema = new mongoose.Schema({
         default: 0
     },
     
+    // Total amount spent by customer (in merchant's currency)
+    totalSpent: {
+        type: Number,
+        default: 0
+    },
+    
     points: {
         type: Number,
         default: 0
+    },
+
+    // Customer loyalty tier based on points/spending
+    tier: {
+        type: String,
+        enum: ['bronze', 'silver', 'gold', 'platinum'],
+        default: 'bronze'
     },
 
     shareCount: {

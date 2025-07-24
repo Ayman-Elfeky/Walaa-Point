@@ -56,9 +56,36 @@ const onOrderCreated = async (req, res) => {
         console.log('📦 Order created webhook received');
         const { merchant: merchantId, data } = req.body;
 
+        // Debug: Log the data structure to help identify issues
+        console.log('🔍 Webhook data structure:', JSON.stringify(data, null, 2));
+
+        // Define totalAmount at the top to avoid reference errors
+        // Handle different possible data structures from Salla webhook
+        let totalAmount = 0;
+        
+        if (data.amounts && data.amounts.total && data.amounts.total.amount) {
+            totalAmount = data.amounts.total.amount;
+        } else if (data.total && data.total.amount) {
+            totalAmount = data.total.amount;
+        } else if (data.amount) {
+            totalAmount = data.amount;
+        }
+
         console.log('Merchant ID:', merchantId);
-        console.log('Customer ID:', data.customer.id);
-        console.log('Order Total:', data.amounts.total.amount);
+        console.log('Customer ID:', data.customer?.id);
+        console.log('Order Total:', totalAmount);
+
+        // Validate customer data
+        if (!data.customer?.id) {
+            console.log('⚠️ Missing customer ID in webhook data');
+            return res.status(400).json({ message: 'Missing customer ID' });
+        }
+
+        // Validate that we have a valid amount
+        if (!totalAmount || totalAmount <= 0) {
+            console.log('⚠️ Invalid or zero order amount:', totalAmount);
+            return res.status(400).json({ message: 'Invalid order amount' });
+        }
 
         const merchantFound = await Merchant.findOne({ merchantId: merchantId });
 
@@ -73,41 +100,46 @@ const onOrderCreated = async (req, res) => {
             console.log('👤 Customer not found, creating new customer:', data.customer.id);
 
             // Create new customer from order data
+            console.log('🔄 DEBUG: About to create new customer with totalAmount:', totalAmount);
             customer = new Customer({
                 customerId: data.customer.id,
-                name: data.customer.full_name || null,
-                email: data.customer.email || null,
-                phone: data.customer.mobile || data.customer.phone || null,
+                name: data.customer?.full_name || null,
+                email: data.customer?.email || null,
+                phone: data.customer?.mobile || data.customer?.phone || null,
                 merchant: merchantFound._id,
                 orderCount: 1, // This is their first order
+                totalSpent: totalAmount, // Initialize with first order amount
                 metadata: data.customer // Store the full customer data from Salla
             });
 
             await customer.save();
             console.log('✅ New customer created:', customer.customerId);
 
-            // Award welcome points if enabled for new customers
+            // Award welcome points BEFORE purchase points for new customers
             if (merchantFound.loyaltySettings?.welcomePoints?.enabled) {
                 try {
-                    await loyaltyEngine({
+                    const welcomeResult = await loyaltyEngine({
                         event: 'welcome',
                         merchant: merchantFound,
                         customer,
                         metadata: { source: 'order_created_webhook' }
                     });
-                    console.log('🎉 Welcome points awarded to new customer');
+                    console.log('🎉 Welcome points awarded to new customer:', welcomeResult.pointsAwarded);
                 } catch (welcomeError) {
                     console.error('❌ Error awarding welcome points:', welcomeError);
                     // Don't fail the order processing if welcome points fail
                 }
             }
         } else {
-            // Update order count for existing customer
+            // Update order count and total spent for existing customer
+            console.log('🔄 DEBUG: About to update existing customer with totalAmount:', totalAmount);
             customer.orderCount = (customer.orderCount || 0) + 1;
+            customer.totalSpent = (customer.totalSpent || 0) + totalAmount;
             await customer.save();
+            console.log(`💰 Updated customer spending: ${customer.totalSpent} (added ${totalAmount})`);
         }
 
-        const totalAmount = data.amounts.total.amount;
+        console.log('🔄 DEBUG: About to create metadata with totalAmount:', totalAmount);
         const metadata = {
             orderId: data.id,
             amount: totalAmount,
@@ -116,12 +148,21 @@ const onOrderCreated = async (req, res) => {
         };
 
         console.log('Processing purchase points...');
+        console.log('🔍 DEBUG: Merchant loyalty settings:', JSON.stringify(merchantFound.loyaltySettings, null, 2));
+        console.log('🔍 DEBUG: Customer before purchase:', `ID: ${customer.customerId}, Current Points: ${customer.points || 0}`);
+        
         const result = await loyaltyEngine({
             event: 'purchase',
             merchant: merchantFound,
             customer,
             metadata
         });
+        
+        console.log('🔍 DEBUG: Loyalty engine result:', JSON.stringify(result, null, 2));
+        
+        // Fetch updated customer to show final points
+        const updatedCustomer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });
+        console.log('🔍 DEBUG: Customer after purchase:', `ID: ${updatedCustomer.customerId}, Final Points: ${updatedCustomer.points}, Total Spent: ${updatedCustomer.totalSpent}`);
 
         // Note: purchaseAmountThresholdPoints is handled automatically within the 'purchase' event
         // in the loyalty engine, so we don't need to call it separately
@@ -131,7 +172,7 @@ const onOrderCreated = async (req, res) => {
             message: 'Order processed successfully',
             result,
             orderId: data.id,
-            customerId: data.customer.id,
+            customerId: data.customer?.id,
             amount: totalAmount
         });
     } catch (error) {
@@ -493,19 +534,26 @@ const onOrderDeleted = async (req, res) => {
             return res.status(404).json({ message: 'Customer not found' });
         }
 
-        // Handle points deduction for deleted order
-        // Only deduct points if the order had awarded points previously
+        // Handle points deduction and spending reduction for deleted order
         if (data.total && data.total > 0) {
+            const orderAmount = data.total;
+            
+            // Reduce customer's total spending
+            customer.totalSpent = Math.max(0, (customer.totalSpent || 0) - orderAmount);
+            customer.orderCount = Math.max(0, (customer.orderCount || 0) - 1);
+            await customer.save();
+            console.log(`💰 Updated customer spending after deletion: ${customer.totalSpent} (deducted ${orderAmount})`);
+
             const metadata = {
                 orderId: data.id,
-                amount: data.total,
+                amount: orderAmount,
                 reason: 'order_deleted'
             };
 
             // Calculate points that should be deducted
-            const pointsToDeduct = Math.floor(data.total * (merchant.loyaltySettings?.pointsPerCurrency || 1));
+            const pointsToDeduct = Math.floor(orderAmount * (merchant.loyaltySettings?.pointsPerCurrencyUnit || 1));
 
-            if (pointsToDeduct > 0 && customer.loyaltyPoints >= pointsToDeduct) {
+            if (pointsToDeduct > 0 && customer.points >= pointsToDeduct) {
                 // Deduct points using loyalty engine
                 await loyaltyEngine({
                     event: 'pointsDeduction',
@@ -555,10 +603,15 @@ const onOrderRefunded = async (req, res) => {
             return res.status(404).json({ message: 'Customer not found' });
         }
 
-        // Handle points deduction for refunded order
+        // Handle points deduction and spending reduction for refunded order
         const refundAmount = data.refund_amount || data.total || 0;
 
         if (refundAmount > 0) {
+            // Reduce customer's total spending by refund amount
+            customer.totalSpent = Math.max(0, (customer.totalSpent || 0) - refundAmount);
+            await customer.save();
+            console.log(`💰 Updated customer spending after refund: ${customer.totalSpent} (deducted ${refundAmount})`);
+
             const metadata = {
                 orderId: data.id,
                 amount: refundAmount,
@@ -567,9 +620,9 @@ const onOrderRefunded = async (req, res) => {
             };
 
             // Calculate points that should be deducted based on refund amount
-            const pointsToDeduct = Math.floor(refundAmount * (merchant.loyaltySettings?.pointsPerCurrency || 1));
+            const pointsToDeduct = Math.floor(refundAmount * (merchant.loyaltySettings?.pointsPerCurrencyUnit || 1));
 
-            if (pointsToDeduct > 0 && customer.loyaltyPoints >= pointsToDeduct) {
+            if (pointsToDeduct > 0 && customer.points >= pointsToDeduct) {
                 // Deduct points using loyalty engine
                 await loyaltyEngine({
                     event: 'pointsDeduction',

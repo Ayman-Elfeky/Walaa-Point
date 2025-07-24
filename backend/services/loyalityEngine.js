@@ -33,11 +33,16 @@ const calculatePurchasePoints = (amount, pointsPerCurrencyUnit) => {
 };
 
 // Reusable function to award points and save log
-const awardPoints = async ({ merchant, customerId, points, event, metadata = {} }) => {
-    const customer = await Customer.findOne({ _id: customerId, merchant: merchant._id });
-    if (!customer) return;
+const awardPoints = async ({ merchant, customer, points, event, metadata = {} }) => {
+    console.log(`🔍 DEBUG: awardPoints called - customerId: ${customer._id}, points: ${points}, event: ${event}`);
+    
+    if (!customer) {
+        console.log(`❌ ERROR: Customer object not provided`);
+        return;
+    }
 
-    customer.points += points;
+    console.log(`🔍 DEBUG: Customer found - before points: ${customer.points || 0}, adding: ${points}`);
+    customer.points = (customer.points || 0) + points;
 
     // Calculate and update customer tier based on new points total
     const newTier = calculateCustomerTier(customer.points, merchant.loyaltySettings || {});
@@ -54,7 +59,7 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
     }
 
     await CustomerLoyaltyActivity.create({
-        customerId,
+        customerId: customer._id,
         merchantId: merchant._id,
         event,
         points,
@@ -62,7 +67,7 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
         createdAt: new Date()
     });
 
-    console.log(`\n${points} points awarded to customer ${customerId} for ${event}\n`);
+    console.log(`\n${points} points awarded to customer ${customer._id} for ${event}\n`);
 
     // Send notification email if enabled
     await sendCustomerNotification({
@@ -159,9 +164,11 @@ const awardPoints = async ({ merchant, customerId, points, event, metadata = {} 
 };
 
 // Reusable function to deduct points and save log
-const deductPoints = async ({ merchant, customerId, points, event, metadata = {} }) => {
-    const customer = await Customer.findOne({ _id: customerId, merchant: merchant._id });
-    if (!customer) return;
+const deductPoints = async ({ merchant, customer, points, event, metadata = {} }) => {
+    if (!customer) {
+        console.log(`❌ ERROR: Customer object not provided for deduction`);
+        return;
+    }
 
     // Make sure we don't go below 0 points
     const pointsToDeduct = Math.min(points, customer.points);
@@ -183,7 +190,7 @@ const deductPoints = async ({ merchant, customerId, points, event, metadata = {}
     }
 
     await CustomerLoyaltyActivity.create({
-        customerId,
+        customerId: customer._id,
         merchantId: merchant._id,
         event,
         points: -pointsToDeduct, // Negative points to indicate deduction
@@ -191,7 +198,7 @@ const deductPoints = async ({ merchant, customerId, points, event, metadata = {}
         createdAt: new Date()
     });
 
-    console.log(`\n${pointsToDeduct} points deducted from customer ${customerId} for ${event}\n`);
+    console.log(`\n${pointsToDeduct} points deducted from customer ${customer._id} for ${event}\n`);
 
     // Send notification email if enabled
     await sendCustomerNotification({
@@ -475,30 +482,51 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
 
     switch (event) {
         case 'purchase':
+            const amount = metadata.amount || 0;
+            let totalPointsToAward = 0;
+            
+            // Calculate base purchase points (amount divided by pointsPerCurrencyUnit)
+            const basePoints = calculatePurchasePoints(amount, loyalty.pointsPerCurrencyUnit || 1);
+            if (basePoints > 0) {
+                totalPointsToAward += basePoints;
+                result.activities.push({ type: 'base_purchase_points', points: basePoints, amount });
+            }
+            
+            // Add bonus points per purchase if enabled
             if (loyalty.purchasePoints?.enabled) {
-                const amount = metadata.amount || 0;
-                const points = calculatePurchasePoints(amount, loyalty.pointsPerCurrencyUnit || 1);
-                if (points > 0) {
-                    await awardPoints({ merchant, customerId, points, event: 'purchase', metadata: { amount, orderId: metadata.orderId } });
-                    result.pointsAwarded += points;
-                    result.activities.push({ type: 'purchase_points', points, amount });
+                const bonusPoints = loyalty.purchasePoints.points || 0;
+                if (bonusPoints > 0) {
+                    totalPointsToAward += bonusPoints;
+                    result.activities.push({ type: 'purchase_bonus', points: bonusPoints });
                 }
             }
 
+            // Add threshold bonus if enabled and threshold met
             if (loyalty.purchaseAmountThresholdPoints?.enabled) {
                 const thresholdAmount = loyalty.purchaseAmountThresholdPoints.thresholdAmount;
-                if (metadata.amount >= thresholdAmount) {
+                if (amount >= thresholdAmount) {
                     const thresholdPoints = loyalty.purchaseAmountThresholdPoints.points;
-                    await awardPoints({
-                        merchant,
-                        customerId,
-                        points: thresholdPoints,
-                        event: 'purchaseThreshold',
-                        metadata: { amount: metadata.amount, orderId: metadata.orderId }
-                    });
-                    result.pointsAwarded += thresholdPoints;
-                    result.activities.push({ type: 'threshold_bonus', points: thresholdPoints, threshold: thresholdAmount });
+                    if (thresholdPoints > 0) {
+                        totalPointsToAward += thresholdPoints;
+                        result.activities.push({ type: 'threshold_bonus', points: thresholdPoints, threshold: thresholdAmount });
+                    }
                 }
+            }
+            
+            // Award all points in a single call to avoid database conflicts
+            if (totalPointsToAward > 0) {
+                await awardPoints({ 
+                    merchant, 
+                    customer, 
+                    points: totalPointsToAward, 
+                    event: 'purchase', 
+                    metadata: { 
+                        amount, 
+                        orderId: metadata.orderId,
+                        breakdown: result.activities 
+                    } 
+                });
+                result.pointsAwarded = totalPointsToAward;
             }
             break;
 
@@ -506,7 +534,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'feedbackShippingPoints': // Alias for feedback
             if (loyalty.feedbackShippingPoints?.enabled) {
                 const points = loyalty.feedbackShippingPoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'feedback', metadata });
+                await awardPoints({ merchant, customer, points, event: 'feedback', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'feedback', points });
             }
@@ -515,7 +543,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'birthday':
             if (loyalty.birthdayPoints?.enabled) {
                 const points = loyalty.birthdayPoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'birthday', metadata });
+                await awardPoints({ merchant, customer, points, event: 'birthday', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'birthday', points });
             }
@@ -525,7 +553,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'ratingProductPoints': // Alias for rating
             if (loyalty.ratingProductPoints?.enabled) {
                 const points = loyalty.ratingProductPoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'rating', metadata });
+                await awardPoints({ merchant, customer, points, event: 'rating', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'product_rating', points });
             }
@@ -534,7 +562,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'profileCompletion':
             if (loyalty.profileCompletionPoints?.enabled) {
                 const points = loyalty.profileCompletionPoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'profileCompletion', metadata });
+                await awardPoints({ merchant, customer, points, event: 'profileCompletion', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'profile_completion', points });
             }
@@ -543,7 +571,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'repeatPurchase':
             if (loyalty.repeatPurchasePoints?.enabled) {
                 const points = loyalty.repeatPurchasePoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'repeatPurchase', metadata });
+                await awardPoints({ merchant, customer, points, event: 'repeatPurchase', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'repeat_purchase', points });
             }
@@ -552,7 +580,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'welcome':
             if (loyalty.welcomePoints?.enabled) {
                 const points = loyalty.welcomePoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'welcome', metadata });
+                await awardPoints({ merchant, customer, points, event: 'welcome', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'welcome', points });
             }
@@ -561,7 +589,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'installApp':
             if (loyalty.installAppPoints?.enabled) {
                 const points = loyalty.installAppPoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'installApp', metadata });
+                await awardPoints({ merchant, customer, points, event: 'installApp', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'install_app', points });
             }
@@ -570,7 +598,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'shareReferral':
             if (loyalty.shareReferralPoints?.enabled) {
                 const points = loyalty.shareReferralPoints.points;
-                await awardPoints({ merchant, customerId, points, event: 'shareReferral', metadata });
+                await awardPoints({ merchant, customer, points, event: 'shareReferral', metadata });
                 result.pointsAwarded = points;
                 result.activities.push({ type: 'share_referral', points });
             }
@@ -579,7 +607,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'pointsDeduction':
             const pointsToDeduct = metadata.pointsDeducted || 0;
             if (pointsToDeduct > 0) {
-                await deductPoints({ merchant, customerId, points: pointsToDeduct, event: 'pointsDeduction', metadata });
+                await deductPoints({ merchant, customer, points: pointsToDeduct, event: 'pointsDeduction', metadata });
                 result.pointsAwarded = -pointsToDeduct; // Negative to indicate deduction
                 result.activities.push({ type: 'points_deduction', points: -pointsToDeduct, reason: metadata.reason });
             }

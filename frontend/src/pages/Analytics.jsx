@@ -154,7 +154,7 @@ const Analytics = () => {
         </div>
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
           <select
-            className="input w-auto"
+            className="input w-auto cursor-pointer"
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
           >

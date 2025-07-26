@@ -395,7 +395,7 @@ const Customers = () => {
             </div>
           </div>
           <select
-            className="input w-auto min-w-[140px]"
+            className="input w-auto min-w-[140px] cursor-pointer"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >

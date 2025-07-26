@@ -277,7 +277,7 @@ const Rewards = () => {
             </div>
           </div>
           <select
-            className="input w-auto min-w-[140px]"
+            className="input w-auto min-w-[140px] cursor-pointer"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
           >

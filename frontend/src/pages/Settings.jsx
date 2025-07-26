@@ -49,15 +49,7 @@ const Settings = () => {
   const [showPassword, setShowPassword] = useState(false);
   
   // Form States
-  const [profileData, setProfileData] = useState({
-    name: 'متجر أحمد للألكترونيات',
-    email: 'ahmed@example.com',
-    phone: '+966501234567',
-    address: 'الرياض، المملكة العربية السعودية',
-    description: 'متخصصون في بيع الأجهزة الإلكترونية والهواتف الذكية',
-    website: 'https://ahmed-electronics.com',
-    logo: null
-  });
+  const [profileData, setProfileData] = useState({});
 
   const [loyaltySettings, setLoyaltySettings] = useState({
     // Start with minimal defaults - will be populated from API
@@ -129,6 +121,12 @@ const Settings = () => {
 
   // Fetch loyalty settings from backend on component mount
   useEffect(() => {
+    const getUserInfoFromLocalStorage = () => {
+      const user = localStorage.getItem("user");
+      console.log(typeof user)
+      setProfileData(JSON.parse(user))
+    }
+
     const fetchLoyaltySettings = async () => {
       try {
         const response = await settingsService.getLoyaltySettings();
@@ -173,6 +171,7 @@ const Settings = () => {
       }
     };
 
+    getUserInfoFromLocalStorage()
     fetchLoyaltySettings();
   }, []);
 
@@ -228,7 +227,7 @@ const Settings = () => {
               type="text"
               className="input"
               value={profileData.name}
-              onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+              readOnly
             />
           </div>
           <div>
@@ -239,7 +238,7 @@ const Settings = () => {
               type="email"
               className="input"
               value={profileData.email}
-              onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+              readOnly
             />
           </div>
           <div>
@@ -250,7 +249,7 @@ const Settings = () => {
               type="tel"
               className="input"
               value={profileData.phone}
-              onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+              readOnly
             />
           </div>
           <div>
@@ -260,8 +259,8 @@ const Settings = () => {
             <input
               type="url"
               className="input"
-              value={profileData.website}
-              onChange={(e) => setProfileData(prev => ({ ...prev, website: e.target.value }))}
+              value={profileData.storeName}
+              readOnly
             />
           </div>
           <div className="md:col-span-2">
@@ -271,19 +270,8 @@ const Settings = () => {
             <input
               type="text"
               className="input"
-              value={profileData.address}
-              onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-              {t('common.description')}
-            </label>
-            <textarea
-              className="input"
-              rows={3}
-              value={profileData.description}
-              onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
+              value={profileData.storeLocation || t('settings.unavailable')}
+              readOnly
             />
           </div>
         </div>
@@ -306,19 +294,19 @@ const Settings = () => {
     <div className="space-y-6">
       {/* Purchase Points Configuration */}
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">Purchase Points Configuration</h3>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.PurchasePointsConfiguration')}</h3>
         <div className="space-y-4">
           {/* Core Purchase Configuration - Always Visible */}
           <div className="p-4 bg-secondary-50 dark:bg-gray-800 rounded-lg">
             <div className="mb-4">
-              <h4 className="text-secondary-900 dark:text-gray-100 font-medium mb-2">Base Purchase Points</h4>
-              <p className="text-sm text-secondary-600 dark:text-gray-400">Core settings for earning points from purchases</p>
+              <h4 className="text-secondary-900 dark:text-gray-100 font-medium mb-2">{t('settings.BasePurchasePoints')}</h4>
+              <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.coreSettingsForEarningPointsFromPurchases')}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-                  Points per Currency Unit (1 point per X SAR)
+                  {t('settings.pointsPerCurrencyUnit')}
                 </label>
                 <input
                   type="number"
@@ -329,12 +317,12 @@ const Settings = () => {
                   onChange={(e) => setLoyaltySettings(prev => ({ ...prev, pointsPerCurrencyUnit: parseInt(e.target.value) }))}
                 />
                 <p className="text-xs text-secondary-500 dark:text-gray-400 mt-1">
-                  Customer earns 1 point for every {loyaltySettings.pointsPerCurrencyUnit} SAR spent
+                  {`${t('settings.customerEarns1PointForEvery')} ${loyaltySettings.pointsPerCurrencyUnit} ${t('settings.sarSpent')}`}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-                  Points Required for Reward
+                  {t('settings.pointsRequiredForReward')}
                 </label>
                 <input
                   type="number"
@@ -344,7 +332,7 @@ const Settings = () => {
                   onChange={(e) => setLoyaltySettings(prev => ({ ...prev, rewardThreshold: parseInt(e.target.value) }))}
                 />
                 <p className="text-xs text-secondary-500 dark:text-gray-400 mt-1">
-                  Minimum points needed to redeem rewards
+                  {t('settings.minimumPointsNeededToRedeemRewards')}
                 </p>
               </div>
             </div>
@@ -354,8 +342,8 @@ const Settings = () => {
           <div className="p-4 bg-secondary-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <span className="text-secondary-900 dark:text-gray-100 block font-medium">Bonus Purchase Points</span>
-                <span className="text-sm text-secondary-600 dark:text-gray-400">Award additional fixed bonus points for each purchase</span>
+                <span className="text-secondary-900 dark:text-gray-100 block font-medium">{t('settings.bonusPurchasePoints')}</span>
+                <span className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.awardAdditionalFixedBonusPoints')}</span>
               </div>
               <label className="toggle">
                 <input
@@ -387,7 +375,7 @@ const Settings = () => {
                     }))}
                   />
                   <p className="text-xs text-secondary-500 dark:text-gray-400 mt-1">
-                    Additional fixed bonus points awarded with each purchase (on top of currency-based points)
+                    {t('settings.additionalFixedBonusPointsAwardedWithEachPurchase')}
                   </p>
                 </div>
               </div>
@@ -398,7 +386,7 @@ const Settings = () => {
 
       {/* Event-Based Points Settings */}
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">Event-Based Point Rules</h3>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.eventBasedPointRules')}</h3>
         <div className="space-y-4">
 
           {/* Welcome Points */}
@@ -406,8 +394,8 @@ const Settings = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-secondary-900 dark:text-gray-100 block font-medium">Welcome Points</span>
-                  <span className="text-sm text-secondary-600 dark:text-gray-400">Award points to new customers</span>
+                  <span className="text-secondary-900 dark:text-gray-100 block font-medium">{t('settings.welcomePoints')}</span>
+                  <span className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.awardPointsToNewCustomers')}</span>
                 </div>
                 <label className="toggle">
                   <input
@@ -424,7 +412,7 @@ const Settings = () => {
               {loyaltySettings.welcomePoints?.enabled && (
                 <div className="mt-3">
                   <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-1">
-                    Welcome Bonus Points
+                    {t('settings.welcomeBonusPoints')}
                   </label>
                   <input
                     type="number"
@@ -446,8 +434,8 @@ const Settings = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-secondary-900 dark:text-gray-100 block font-medium">Large Order Bonus</span>
-                  <span className="text-sm text-secondary-600 dark:text-gray-400">Extra points for orders above threshold</span>
+                  <span className="text-secondary-900 dark:text-gray-100 block font-medium">{t('settings.largeOrderBonus')}</span>
+                  <span className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.extraPointsForOrdersAboveThreshold')}</span>
                 </div>
                 <label className="toggle">
                   <input
@@ -465,7 +453,7 @@ const Settings = () => {
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-1">
-                      Minimum Order (SAR)
+                      {t('settings.minimumOrder(SAR)')}
                     </label>
                     <input
                       type="number"
@@ -483,7 +471,7 @@ const Settings = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-1">
-                      Bonus Points
+                      {t('settings.bonusPoints')}
                     </label>
                     <input
                       type="number"
@@ -508,11 +496,11 @@ const Settings = () => {
 
       {/* Tier Thresholds */}
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">Customer Tier Thresholds</h3>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.customerTierThresholds')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-              Silver Tier (Points Required)
+              {t('settings.silverTier(PointsRequired)')}
             </label>
             <input
               type="number"
@@ -524,7 +512,7 @@ const Settings = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-              Gold Tier (Points Required)
+              {t('settings.goldTier(PointsRequired)')}
             </label>
             <input
               type="number"
@@ -536,7 +524,7 @@ const Settings = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-              Platinum Tier (Points Required)
+              {t('settings.platinumTier(PointsRequired)')}
             </label>
             <input
               type="number"
@@ -556,7 +544,7 @@ const Settings = () => {
           className="btn btn-primary"
         >
           <Save className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-          Save Loyalty Settings
+          {t('settings.saveLoyaltySettings')}
         </button>
       </div>
     </div>
@@ -694,9 +682,9 @@ const Settings = () => {
               value={appearance.currency}
               onChange={(e) => setAppearance(prev => ({ ...prev, currency: e.target.value }))}
             >
-              <option value="SAR">Saudi Riyal (SAR)</option>
-              <option value="USD">US Dollar (USD)</option>
-              <option value="EUR">Euro (EUR)</option>
+              <option value="SAR">{t('settings.saudiriyal')} (SAR)</option>
+              <option value="USD">{t('settings.usdollar')} (USD)</option>
+              <option value="EUR">{t('settings.euro')} (EUR)</option>
             </select>
           </div>
           <div>
@@ -708,9 +696,9 @@ const Settings = () => {
               value={appearance.dateFormat}
               onChange={(e) => setAppearance(prev => ({ ...prev, dateFormat: e.target.value }))}
             >
-              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              <option value="DD/MM/YYYY">{t('settings.dateFormatDDMMYYYY')}</option>
+              <option value="MM/DD/YYYY">{t('settings.dateFormatMMDDYYYY')}</option>
+              <option value="YYYY-MM-DD">{t('settings.dateFormatYYYYMMDD')}</option>
             </select>
           </div>
         </div>

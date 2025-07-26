@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Users, 
-  UserCheck, 
-  Coins, 
+import {
+  Users,
+  UserCheck,
+  Coins,
   Gift,
   TrendingUp,
   TrendingDown,
@@ -18,6 +18,7 @@ import { analyticsService } from '../services/analyticsService';
 import { customerService } from '../services/customerService';
 import { formatNumber, formatCurrency, formatDate, calculatePercentageChange } from '../utils';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -25,12 +26,13 @@ const Dashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [chartData, setChartData] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
+  const { user } = useAuth()
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch dashboard metrics and recent activities
         const [metricsResponse, activityResponse] = await Promise.all([
           fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/merchant/dashboard`, {
@@ -121,7 +123,7 @@ const Dashboard = () => {
             {t('dashboard.title')}
           </h1>
           <p className="text-secondary-600 dark:text-gray-400 mt-1">
-            {t('dashboard.welcome')}
+            {`${t('dashboard.welcome')}`}
           </p>
         </div>
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
@@ -160,13 +162,12 @@ const Dashboard = () => {
                     ) : (
                       <ArrowDownRight className="h-4 w-4 text-red-500" />
                     )}
-                    <span className={`text-sm font-medium ${
-                      isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                    }`}>
+                    <span className={`text-sm font-medium ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                      }`}>
                       {Math.abs(stat.change).toFixed(1)}%
                     </span>
                     <span className="text-xs text-secondary-500 dark:text-gray-500">
-                      vs last month
+                      {t('dashboard.vsLastMonth')}
                     </span>
                   </div>
                 </div>
@@ -197,8 +198,8 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={chartData?.customerGrowth || []}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="date"
                 tick={{ fontSize: 12 }}
                 axisLine={false}
               />
@@ -248,7 +249,7 @@ const Dashboard = () => {
           <div className="flex justify-center space-x-6 rtl:space-x-reverse mt-4 flex-wrap gap-y-2">
             {(chartData?.engagement || []).map((item) => (
               <div key={item.name} className="flex items-center">
-                <div 
+                <div
                   className="w-3 h-3 rounded-full mr-2"
                   style={{ backgroundColor: item.color }}
                 />
@@ -288,9 +289,8 @@ const Dashboard = () => {
               return (
                 <div key={activityId} className="flex items-center justify-between py-3 border-b border-secondary-100 dark:border-gray-700 last:border-b-0">
                   <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      activityPoints > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activityPoints > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
+                      }`}>
                       {activityPoints > 0 ? (
                         <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
                       ) : (
@@ -307,9 +307,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-semibold ${
-                      activityPoints > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                    }`}>
+                    <p className={`text-sm font-semibold ${activityPoints > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                      }`}>
                       {activityPoints > 0 ? '+' : ''}{activityPoints} {t('customers.points')}
                     </p>
                     <p className="text-xs text-secondary-500 dark:text-gray-400">
@@ -322,9 +321,9 @@ const Dashboard = () => {
           ) : (
             <div className="text-center py-8">
               <Activity className="h-12 w-12 text-secondary-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-secondary-500 dark:text-gray-400">No recent activity</p>
+              <p className="text-secondary-500 dark:text-gray-400">{t('dashboard.noRecentActivity')}</p>
               <p className="text-sm text-secondary-400 dark:text-gray-500 mt-1">
-                Customer activities will appear here once they start earning or redeeming points
+                {t('dashboard.noRecentActivityDescription')}
               </p>
             </div>
           )}

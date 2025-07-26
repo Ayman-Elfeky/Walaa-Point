@@ -392,19 +392,19 @@ const Subscription = () => {
       </motion.div>
 
       {/* Usage Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-secondary-900 mb-4">Usage Trends</h3>
+          <h3 className="text-lg font-semibold text-secondary-900 mb-4">{t('subscription.usageTrends')}</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
               <div className="flex items-center">
                 <Users className="h-5 w-5 text-blue-500 mr-3 rtl:mr-0 rtl:ml-3" />
-                <span className="text-secondary-900">Customer Growth</span>
+                <span className="text-secondary-900">{t('subscription.customerGrowth')}</span>
               </div>
               <div className="flex items-center text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1 rtl:mr-0 rtl:ml-1" />
@@ -415,7 +415,7 @@ const Subscription = () => {
             <div className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
               <div className="flex items-center">
                 <Gift className="h-5 w-5 text-purple-500 mr-3 rtl:mr-0 rtl:ml-3" />
-                <span className="text-secondary-900">Reward Redemptions</span>
+                <span className="text-secondary-900">{t('subscription.rewardRedemption')}</span>
               </div>
               <div className="flex items-center text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1 rtl:mr-0 rtl:ml-1" />
@@ -426,45 +426,11 @@ const Subscription = () => {
             <div className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
               <div className="flex items-center">
                 <Mail className="h-5 w-5 text-green-500 mr-3 rtl:mr-0 rtl:ml-3" />
-                <span className="text-secondary-900">Email Usage</span>
+                <span className="text-secondary-900">{t('subscription.emailUsage')}</span>
               </div>
               <div className="flex items-center text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1 rtl:mr-0 rtl:ml-1" />
                 <span className="font-medium">+15.2%</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="card"
-        >
-          <h3 className="text-lg font-semibold text-secondary-900 mb-4">Recommendations</h3>
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start">
-                <Target className="h-5 w-5 text-blue-500 mr-3 rtl:mr-0 rtl:ml-3 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-blue-900 mb-1">Optimize Email Usage</h4>
-                  <p className="text-sm text-blue-700">
-                    You're using 32% of your email quota. Consider segmenting campaigns for better efficiency.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start">
-                <Zap className="h-5 w-5 text-green-500 mr-3 rtl:mr-0 rtl:ml-3 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-green-900 mb-1">API Performance</h4>
-                  <p className="text-sm text-green-700">
-                    Your API usage is well within limits. Great job optimizing your integration!
-                  </p>
-                </div>
               </div>
             </div>
           </div>

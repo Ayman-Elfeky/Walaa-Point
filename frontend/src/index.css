@@ -470,7 +470,7 @@ html[dir="rtl"] .toast {
   background-color: #3b82f6;
 }
 
-/* RTL toggle styles */
+/* RTL toggle styles
 html[dir="rtl"] .toggle input:checked + .toggle-slider:before {
-  transform: translateX(-24px);
-}
+  transform: translateX(24px);
+} */

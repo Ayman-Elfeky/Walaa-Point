@@ -28,30 +28,82 @@ const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const { user } = useAuth()
 
+  // Helper function to process customer growth data for chart
+  const processCustomerGrowthData = (data) => {
+    if (!data || data.length === 0) return [];
+
+    // Convert aggregated data to chart format
+    let cumulativeCount = 0;
+    return data.map(item => {
+      cumulativeCount += item.count;
+      const date = new Date(item._id.year, item._id.month - 1, item._id.day);
+      return {
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        customers: cumulativeCount
+      };
+    });
+  };
+
+  // Helper function to process engagement data for pie chart
+  const processEngagementData = (data) => {
+    if (!data || data.length === 0) {
+      return [
+        { name: 'Low', value: 0, color: '#ef4444' },
+        { name: 'Medium', value: 0, color: '#f59e0b' },
+        { name: 'High', value: 100, color: '#10b981' }
+      ];
+    }
+
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+    const colors = { Low: '#ef4444', Medium: '#f59e0b', High: '#10b981' };
+
+    return data.map(item => ({
+      name: item._id,
+      value: total > 0 ? Math.round((item.count / total) * 100) : 0,
+      color: colors[item._id] || '#6b7280'
+    }));
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
-        // Fetch dashboard metrics and recent activities
-        const [metricsResponse, activityResponse] = await Promise.all([
+        // Fetch dashboard metrics, recent activities, and chart data
+        const [metricsResponse, activityResponse, customerGrowthResponse, engagementResponse] = await Promise.all([
           fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/merchant/dashboard`, {
             credentials: 'include'
           }).then(res => res.json()),
-          customerService.getRecentActivities()
+          customerService.getRecentActivities(),
+          analyticsService.getCustomerGrowth('6months'),
+          analyticsService.getEngagementLevels('30days')
         ]);
 
         setMetrics(metricsResponse || {});
         setRecentActivity((activityResponse?.activities || []).slice(0, 5));
 
-        // Set empty chart data for now since we don't have analytics yet
-        setChartData({ customerGrowth: [], pointsFlow: [], engagement: [] });
+        // Process chart data
+        const processedChartData = {
+          customerGrowth: processCustomerGrowthData(customerGrowthResponse?.data || []),
+          engagement: processEngagementData(engagementResponse?.data || []),
+          pointsFlow: []
+        };
+
+        setChartData(processedChartData);
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Set empty data if API fails
+        // Set fallback data if API fails
         setMetrics({});
-        setChartData({ customerGrowth: [], pointsFlow: [], engagement: [] });
+        setChartData({
+          customerGrowth: [],
+          pointsFlow: [],
+          engagement: [
+            { name: 'Low', value: 30, color: '#ef4444' },
+            { name: 'Medium', value: 45, color: '#f59e0b' },
+            { name: 'High', value: 25, color: '#10b981' }
+          ]
+        });
         setRecentActivity([]);
       } finally {
         setLoading(false);

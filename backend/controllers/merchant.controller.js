@@ -15,10 +15,6 @@ const loginMerchant = async (req, res) => {
     try {
         // Use findOne instead of find to get a single merchant
         const merchant = await Merchant.findOne({ installerEmail: email });
-        // Save it in redis for caching
-        // await redisClient.set(`merchant:${merchant._id}`, JSON.stringify(merchant)
-        // );
-        // this will change in redis if the merchant profile is updated
 
         // Check if merchant exists
         if (!merchant) {
@@ -28,6 +24,7 @@ const loginMerchant = async (req, res) => {
             });
         }
 
+        console.log("Login password: ", password)
         // Check if password matches
         if (await bcrypt.compare(password, merchant.password)) {            // Generate JWT token
             const token = generateToken(merchant);
@@ -48,6 +45,8 @@ const loginMerchant = async (req, res) => {
                     email: merchant.installerEmail,
                     phone: merchant.installerMobile,
                     avatar: merchant.merchantAvatar,
+                    storeName: merchant.merchantDomain,
+                    storeLocation: merchant.storeLocation
                 },
                 message: 'Merchant Login Successfully'
             });

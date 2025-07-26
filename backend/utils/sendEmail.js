@@ -13,7 +13,7 @@ module.exports.sendEmail = async (userEmail, subject, htmlTemplate) => {
 
         const mailOptions = {
             from: `"Loyalfy" <${process.env.APP_EMAIL_ADDRESS}>`,
-            to: 'mohalya3@gmail.com',
+            to: 'aywork73@gmail.com',
             subject: subject,
             html: htmlTemplate
         }

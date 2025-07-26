@@ -131,6 +131,9 @@ const merchantSchema = new mongoose.Schema({
         type: Number,
         default: 0 // Total points accumulated by the merchant
     },
+    storeLocation: {
+        type: String,
+    },
     loyaltySettings: {
         type: loyaltySettingsSchema,
         default: () => ({}) // ensures new object per merchant

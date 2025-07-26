@@ -328,6 +328,7 @@ const onStoreAuthorize = async (req, res) => {
             return res.status(400).json({ message: 'Merchant email is required' });
         }
         const randomPassword = generateSecurePassword();
+        console.log("Random Password: ", randomPassword)
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
         const newMerchant = new Merchant({
@@ -342,6 +343,7 @@ const onStoreAuthorize = async (req, res) => {
             merchantAvatar: merchantDetails.data.merchant.avatar,
             merchantDomain: merchantDetails.data.merchant.domain,
             merchantSubscription: merchantDetails.data.merchant.subscription,
+            storeLocation: merchantDetails.data.merchant.store_location,
             password: hashedPassword,
             accessToken: data.access_token,
             refreshToken: data.refresh_token,

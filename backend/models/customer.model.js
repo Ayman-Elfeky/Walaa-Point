@@ -51,6 +51,10 @@ const customerSchema = new mongoose.Schema({
         default: 'bronze'
     },
 
+    avatar: {
+        type: String
+    },
+
     shareCount: {
         type: Number,
         default: 0

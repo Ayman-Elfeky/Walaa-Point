@@ -10,7 +10,8 @@ const getCustomers = async (accessToken, options = {}) => {
             ...options
         };
 
-        const data = await sallaSDK.getCustomers(accessToken, defaultOptions);
+        const salla = new sallaSDK()
+        const data = await salla.getCustomers(accessToken, defaultOptions);
         
         console.log(`✅ Fetched ${data.data?.length || 0} customers`);
         return data.data || [];
@@ -20,9 +21,9 @@ const getCustomers = async (accessToken, options = {}) => {
     }
 };
 
-// getCustomers('ory_at_k7GhIgYubx5f6909yOQOIZg0lMfvuNPy_1JKMCW1qlk.6lvqf8lA9xmiko5uiQ5qbZkRL_rih3XrY89st_zqAME')
+// getCustomers('ory_at_ThLKelVmkDrE-sZEauzujJAc7QA6_WB7uT6iYgjZKEo.jxo6QKheYmjEz6NEVluSvREWxAVFx3UvdT-pS7P-eqc')
 // .then(customers => {
-//     console.log('\nCustomers:', customers, '\n');
+//     console.log('\nCustomers:', customers[0], '\n');
 // })
 // .catch(err => {
 //     console.error('\nError fetching customers:', err, '\n');

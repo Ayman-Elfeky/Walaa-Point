@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
+import {
+  Users,
+  UserPlus,
+  Search,
   Filter,
   Download,
   Edit,
@@ -67,7 +67,7 @@ const Customers = () => {
     try {
       setLoading(true);
       const response = await customerService.getAllCustomers();
-      console.log('response: ',response)
+      console.log('response: ', response)
       setCustomers(response.customers || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -99,14 +99,14 @@ const Customers = () => {
     const customerName = customer.name || 'Unknown';
     const customerEmail = customer.email || '';
     const customerPhone = customer.phone || '';
-    
+
     const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customerPhone.includes(searchTerm);
-    
+      customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerPhone.includes(searchTerm);
+
     const customerStatus = customer.status || 'active'; // Default to active if status not set
     const matchesFilter = filterStatus === 'all' || customerStatus === filterStatus;
-    
+
     return matchesSearch && matchesFilter;
   });
 
@@ -140,7 +140,7 @@ const Customers = () => {
   const handleAdjustPoints = async (e) => {
     e.preventDefault();
     if (!selectedCustomer || !pointsForm.points) return;
-    
+
     try {
       setSubmitting(true);
       await customerService.adjustPoints(selectedCustomer._id || selectedCustomer.id, {
@@ -162,7 +162,7 @@ const Customers = () => {
   const handleEditCustomer = async (e) => {
     e.preventDefault();
     if (!selectedCustomer) return;
-    
+
     try {
       setSubmitting(true);
       await customerService.updateCustomer(selectedCustomer._id || selectedCustomer.id, {
@@ -200,7 +200,7 @@ const Customers = () => {
     try {
       const csvHeaders = [
         t('common.name'),
-        t('common.email'), 
+        t('common.email'),
         t('common.phone'),
         t('customers.points'),
         t('customers.tier'),
@@ -227,7 +227,7 @@ const Customers = () => {
       // Convert to CSV format with proper escaping for Arabic text
       const csvContent = [
         csvHeaders.join(','),
-        ...csvData.map(row => 
+        ...csvData.map(row =>
           row.map(field => {
             // Properly escape fields containing commas, quotes, or Arabic text
             const fieldStr = String(field).replace(/"/g, '""');
@@ -241,10 +241,10 @@ const Customers = () => {
       const csvWithBOM = BOM + csvContent;
 
       // Create blob with proper UTF-8 encoding
-      const blob = new Blob([csvWithBOM], { 
-        type: 'text/csv;charset=utf-8;' 
+      const blob = new Blob([csvWithBOM], {
+        type: 'text/csv;charset=utf-8;'
       });
-      
+
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -286,13 +286,13 @@ const Customers = () => {
             <Download className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" />
             {t('common.export')}
           </button>
-          <button
+          {/* <button
             onClick={() => setShowAddModal(true)}
             className="btn btn-primary"
           >
             <UserPlus className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" />
             {t('customers.addCustomer')}
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -415,9 +415,10 @@ const Customers = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
           {filteredCustomers.map((customer, index) => {
+            const customerAvatar = customer.avatar || '';
             const customerName = customer.name || 'Unknown Customer';
             const customerEmail = customer.email || 'No email';
-            const customerPhone = customer.phone || 'No phone';
+            const customerPhone = `${customer.metadata.mobile_code}${customer.metadata.mobile}` || 'No phone';
             const customerPoints = customer.points || 0;
             const customerTier = calculateTier(customerPoints, tierThresholds);
             const customerTotalSpent = customer.totalSpent || 0;
@@ -438,7 +439,11 @@ const Customers = () => {
                   <div className="flex items-center space-x-3 rtl:space-x-reverse">
                     <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
                       <span className="text-lg font-semibold text-primary-700 dark:text-primary-400">
-                        {customerName.charAt(0).toUpperCase()}
+                        {customerAvatar ? (
+                          <img src={customerAvatar} alt={customerName} className="w-full h-full rounded-full" />
+                        ) : (
+                          customerName.charAt(0).toUpperCase()
+                        )}
                       </span>
                     </div>
                     <div>
@@ -464,14 +469,14 @@ const Customers = () => {
                       {formatNumber(customerPoints)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-secondary-600 dark:text-gray-400">{t('customers.totalSpent')}</span>
                     <span className="font-semibold text-secondary-900 dark:text-gray-100">
                       {formatCurrency(customerTotalSpent)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-secondary-600 dark:text-gray-400">{t('customers.orders')}</span>
                     <span className="font-semibold text-secondary-900 dark:text-gray-100">
@@ -531,13 +536,13 @@ const Customers = () => {
             <p className="text-secondary-500 dark:text-gray-400 mb-6">
               {t('customers.startBuildingLoyalty')}
             </p>
-            <button
+            {/* <button
               onClick={() => setShowAddModal(true)}
               className="btn btn-primary"
             >
               <UserPlus className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" />
               {t('customers.addFirstCustomer')}
-            </button>
+            </button> */}
           </div>
         )}
       </motion.div>
@@ -562,7 +567,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, name: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('common.email')}
@@ -575,7 +580,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, email: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('common.phone')}
@@ -587,7 +592,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, phone: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('customers.birthday')}
@@ -599,7 +604,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, birthday: e.target.value }))}
             />
           </div>
-          
+
           <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
             <button
               type="button"
@@ -640,7 +645,7 @@ const Customers = () => {
               onChange={(e) => setPointsForm(prev => ({ ...prev, points: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('customers.type')}
@@ -654,7 +659,7 @@ const Customers = () => {
               <option value="subtract">{t('customers.subtractPoints')}</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('customers.reason')}
@@ -666,7 +671,7 @@ const Customers = () => {
               onChange={(e) => setPointsForm(prev => ({ ...prev, reason: e.target.value }))}
             />
           </div>
-          
+
           <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
             <button
               type="button"
@@ -707,7 +712,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, name: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('common.email')}
@@ -720,7 +725,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, email: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('common.phone')}
@@ -732,7 +737,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, phone: e.target.value }))}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('customers.birthday')}
@@ -744,7 +749,7 @@ const Customers = () => {
               onChange={(e) => setCustomerForm(prev => ({ ...prev, birthday: e.target.value }))}
             />
           </div>
-          
+
           <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4">
             <button
               type="button"

@@ -324,10 +324,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100">
             {t('dashboard.recentActivity')}
-          </h3>
-          <button className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
-            {t('common.view')} {t('common.all')}
-          </button>
+          </h3> 
         </div>
         <div className="space-y-4">
           {recentActivity.length > 0 ? (

@@ -11,7 +11,8 @@ const getOrders = async (accessToken, options = {}) => {
             ...options
         };
 
-        const data = await sallaSDK.getOrders(accessToken, defaultOptions);
+        const salla = new sallaSDK();
+        const data = await salla.getOrders(accessToken, defaultOptions);
         
         console.log(`✅ Fetched ${data.data?.length || 0} orders`);
         return data.data || [];
@@ -21,7 +22,7 @@ const getOrders = async (accessToken, options = {}) => {
     }
 }
 
-// getOrders('ory_at_t8ADUGaU2kuJJwgh5PwdfNTaouOt-0dsynva2q390zI.HhvgFM_SKtQfxuvItqJXjBuFoPzahfo9S2l0vk08pFk')
+// getOrders('ory_at_ThLKelVmkDrE-sZEauzujJAc7QA6_WB7uT6iYgjZKEo.jxo6QKheYmjEz6NEVluSvREWxAVFx3UvdT-pS7P-eqc')
 //     .then(orders => {
 //         console.log('\nOrders:', orders, '\n');
 //     })

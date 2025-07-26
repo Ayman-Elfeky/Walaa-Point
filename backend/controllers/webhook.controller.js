@@ -104,6 +104,7 @@ const onOrderCreated = async (req, res) => {
             customer = new Customer({
                 customerId: data.customer.id,
                 name: data.customer?.full_name || null,
+                avatar: data.customer.avatar,
                 email: data.customer?.email || null,
                 phone: data.customer?.mobile || data.customer?.phone || null,
                 merchant: merchantFound._id,

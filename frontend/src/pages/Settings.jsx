@@ -362,7 +362,7 @@ const Settings = () => {
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                 <div>
                   <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
-                    Bonus Points per Purchase
+                    {t('settings.bonusPointsPerPurchase')}
                   </label>
                   <input
                     type="number"

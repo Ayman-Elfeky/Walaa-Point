@@ -10,6 +10,7 @@ export const rewardService = {
   // Alias for getAllRewards to match frontend usage
   getRewards: async (params = {}) => {
     const response = await api.get('/reward', { params });
+    console.log("Aweha:",response)
     return response.data;
   },
 

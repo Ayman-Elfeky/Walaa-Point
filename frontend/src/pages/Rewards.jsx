@@ -43,14 +43,17 @@ const Rewards = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log("Fetching rewards...");
     fetchRewards();
   }, []);
+
 
   const fetchRewards = async () => {
     try {
       setLoading(true);
       const response = await rewardService.getRewards();
-      setRewards(response.data || []);
+      console.log("Response from the backend:", response.rewards)
+      setRewards(response.rewards || []);
     } catch (error) {
       console.error('Error fetching rewards:', error);
       setRewards([]);
@@ -59,6 +62,8 @@ const Rewards = () => {
       setLoading(false);
     }
   };
+
+  console.log("Rewards: ", rewards)
 
   const filteredRewards = rewards.filter(reward => {
     const matchesSearch = reward.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -295,7 +300,7 @@ const Rewards = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredRewards.map((reward, index) => {
           const RewardIcon = getRewardIcon(reward.type);
-          const usagePercentage = (reward.usageCount / reward.maxUsage) * 100;
+          const usagePercentage = (reward.usageCount / reward.maxTotalUsage) * 100;
 
           return (
             <motion.div
@@ -316,7 +321,7 @@ const Rewards = () => {
                       {reward.name}
                     </h3>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(reward.status)} dark:bg-opacity-20`}>
-                      {reward.status.charAt(0).toUpperCase() + reward.status.slice(1)}
+                      {/* {reward.status.charAt(0).toUpperCase() + reward.status.slice(1)} */}
                     </span>
                   </div>
                 </div>
@@ -351,7 +356,7 @@ const Rewards = () => {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-secondary-600 dark:text-gray-400">{t('rewards.usage')}</span>
                   <span className="text-sm font-medium text-secondary-900 dark:text-gray-100">
-                    {formatNumber(reward.usageCount)} / {formatNumber(reward.maxUsage)}
+                    {formatNumber(reward.maxTotalUsage)} / {formatNumber(reward.maxTotalUsage)}
                   </span>
                 </div>
                 <div className="w-full bg-secondary-200 dark:bg-gray-600 rounded-full h-2">

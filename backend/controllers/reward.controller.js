@@ -153,6 +153,7 @@ const getAllRewards = async (req, res) => {
             rewards: rewardsWithStats
         });
     } catch (error) {
+        console.log("Hhihih");
         console.error('Error fetching rewards:', error.message);
         res.status(500).json({
             success: false,
@@ -166,35 +167,41 @@ const getAllRewards = async (req, res) => {
  * Get single reward rule by ID
  * GET /api/rewards/:id
  */
+// Cast to ObjectId failed for value "coupons" (type string) at path "_id" for model "Reward"
 const getRewardById = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(id)
         const merchant = req.merchant;
-
+        
+        console.log("The problem may be here: reward");
         const reward = await Reward.findOne({
             _id: id,
             merchant: merchant._id
         });
-
+        
         if (!reward) {
             return res.status(404).json({
                 success: false,
                 message: 'Reward not found'
             });
         }
-
+        
+        console.log("The problem may be here: totalCoupons");
         // Get detailed statistics
         const totalCoupons = await Coupon.countDocuments({
             reward: reward._id,
             merchant: merchant._id
         });
-
+        
+        console.log("The problem may be here: redeemedCoupons");
         const redeemedCoupons = await Coupon.countDocuments({
             reward: reward._id,
             merchant: merchant._id,
             used: true
         });
 
+        console.log("The problem may be here: activeCoupons");
         const activeCoupons = await Coupon.countDocuments({
             reward: reward._id,
             merchant: merchant._id,
@@ -202,14 +209,17 @@ const getRewardById = async (req, res) => {
             expiresAt: { $gt: new Date() }
         });
 
+        console.log("The problem may be here: recentCoupons");
         const recentCoupons = await Coupon.find({
             reward: reward._id,
             merchant: merchant._id
         })
-            .populate('customer', 'name email phone customerId')
-            .sort({ createdAt: -1 })
-            .limit(10);
+        .populate('customer', 'name email phone customerId')
+        .sort({ createdAt: -1 })
+        .limit(10);
 
+        console.log("NOOOOOO")
+        
         res.status(200).json({
             success: true,
             message: 'Reward retrieved successfully',
@@ -584,6 +594,31 @@ const applyRewardToCustomer = async (req, res) => {
     }
 };
 
+const getCoupons = async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.split(' ')[1];
+        if (!accessToken) {
+            return res.status(401).json({ success: false, message: 'Access token is required' });
+        }
+
+        const options = req.query || {};
+        const coupons = await loyaltyEngine.getCoupons(accessToken, options);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Coupons retrieved successfully',
+            data: coupons
+        });
+    } catch (error) {
+        console.error('Error fetching coupons:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createReward,
     getAllRewards,
@@ -592,5 +627,6 @@ module.exports = {
     deleteReward,
     applyRewardToCustomer,
     applyShareRewardToCustomer,
-    generateShareableLink
+    generateShareableLink,
+    getCoupons
 };

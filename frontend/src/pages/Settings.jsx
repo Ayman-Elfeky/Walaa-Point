@@ -207,6 +207,7 @@ const Settings = () => {
   const fetchRewards = async () => {
     try {
       const response = await settingsService.getRewards();
+      console.log("response from settings for rewards:", response);
       if (response.success && response.rewards) {
         setRewards(response.rewards);
       }
@@ -218,6 +219,7 @@ const Settings = () => {
   const fetchCoupons = async () => {
     try {
       const response = await settingsService.getCoupons();
+      console.log("response from settings for coupons:", response);
       if (response.success && response.coupons) {
         setCoupons(response.coupons);
       }

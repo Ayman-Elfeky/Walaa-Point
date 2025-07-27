@@ -10,7 +10,8 @@ const {
     deleteReward,
     applyRewardToCustomer, 
     applyShareRewardToCustomer, 
-    generateShareableLink 
+    generateShareableLink,
+    getCoupons
 } = require('../controllers/reward.controller');
 const { redeemCoupon } = require('../controllers/redeemCoupon.controller');
 
@@ -24,6 +25,9 @@ router.delete('/:id', protect, deleteReward);
 // Reward application and redemption
 router.post('/apply', protect, applyRewardToCustomer);
 router.post('/redeem', protect, redeemCoupon);
+
+// Get coupons
+router.get('/coupons', protect, getCoupons)
 
 // Share functionality
 router.get('/generate-share-link/:customerId', protect, generateShareableLink);

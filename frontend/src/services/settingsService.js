@@ -81,4 +81,69 @@ export const updateSecuritySettings = async (settings) => {
     console.error('Error updating security settings:', error);
     throw error;
   }
+};
+
+/**
+ * Get all rewards/coupons for settings management
+ */
+export const getRewards = async () => {
+  try {
+    const response = await api.get('/reward');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching rewards:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a new reward/coupon
+ */
+export const createReward = async (rewardData) => {
+  try {
+    const response = await api.post('/reward', rewardData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating reward:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update an existing reward/coupon
+ */
+export const updateReward = async (rewardId, rewardData) => {
+  try {
+    const response = await api.put(`/reward/${rewardId}`, rewardData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating reward:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a reward/coupon
+ */
+export const deleteReward = async (rewardId) => {
+  try {
+    const response = await api.delete(`/reward/${rewardId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting reward:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all coupons
+ */
+export const getCoupons = async (params = {}) => {
+  try {
+    const response = await api.get('/reward/coupons', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching coupons:', error);
+    throw error;
+  }
 }; 

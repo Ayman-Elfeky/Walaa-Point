@@ -327,10 +327,12 @@ const Dashboard = () => {
           </h3> 
         </div>
         <div className="space-y-4">
+          {console.log(recentActivity)}
           {recentActivity.length > 0 ? (
             recentActivity.map((activity) => {
               const activityId = activity._id || activity.id;
-              const customerName = activity.customerId?.name || 'Unknown Customer';
+              console.log(activity.customerId)
+              const customerName = activity.customerId?.name || activity.customerId?.metadata?.full_name || 'Unknown Customer';
               const activityDescription = activity.metadata?.description || activity.event || 'Activity';
               const activityPoints = activity.points || 0;
               const activityTime = activity.timestamp || activity.time || new Date();

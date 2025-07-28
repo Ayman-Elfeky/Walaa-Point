@@ -23,9 +23,12 @@ const customerSchema = new mongoose.Schema({
         }
     }],
 
-    name: { type: String },
-    email: { type: String },
-    phone: { type: String },
+    name: { 
+        type: String,
+        required: true,
+     },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
     dateOfBirth: { type: Date },
 
     orderCount: {

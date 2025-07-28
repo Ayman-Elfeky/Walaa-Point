@@ -4,7 +4,6 @@ const couponSchema = new mongoose.Schema({
     code: {
         type: String,
         required: false, // Allow null for Flow 2: On-demand generation
-        default: null
         // Note: uniqueness is enforced by sparse index, not schema-level unique constraint
     },
 

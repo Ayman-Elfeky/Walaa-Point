@@ -10,15 +10,16 @@ const redeemCoupon = async (req, res) => {
         console.log('\nRedeeming coupon\n');
         console.log('\nRequest body:', JSON.stringify(req.body, null, 2), '\n');
 
-        const { couponId, orderId } = req.body;
-        const merchant = req.merchant;
+        const { couponId, orderId } = req.body; // Added orderId extraction
+        const merchant = req.merchant; // Get merchant from request
 
         if (!couponId) {
             console.log('\nMissing coupon ID\n');
             return res.status(400).json({ success: false, message: 'Coupon ID is required' });
         }
 
-        const coupon = await Coupon.findOne({ _id: couponId, merchant: merchant._id })
+        const coupon = await Coupon.findOne({ _id: couponId })
+            .populate('merchant')
             .populate('reward')
             .populate('customer');
 
@@ -53,9 +54,9 @@ const redeemCoupon = async (req, res) => {
         // Flow 1: Coupon code should already exist (generated during point award)
         if (!coupon.code) {
             console.log('\nCoupon code is missing! This should not happen in Flow 1.\n');
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Coupon code is not available. Please contact support.' 
+            return res.status(500).json({
+                success: false,
+                message: 'Coupon code is not available. Please contact support.'
             });
         }
 
@@ -122,10 +123,11 @@ const redeemCoupon = async (req, res) => {
             // Send notification to admin
             try {
                 const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                const customerName = customer.name || customer.metadata?.full_name || customer.email;
                 const emailHtml = require('../utils/templates/notification.template').notification(
                     storeLink,
-                    `تم استخدام كوبون مكافأة للعميل ${customer.name || customer.email}: ${coupon.code}`,
-                    `A reward coupon was redeemed for customer ${customer.name || customer.email}: ${coupon.code}`,
+                    `تم استخدام كوبون مكافأة للعميل ${customerName}: ${coupon.code}`,
+                    `A reward coupon was redeemed for customer ${customerName}: ${coupon.code}`,
                     coupon.code
                 );
                 await require('../utils/sendEmail').sendEmail('aywork73@gmail.com', 'Reward Coupon Redeemed', emailHtml);
@@ -133,7 +135,7 @@ const redeemCoupon = async (req, res) => {
                 console.error('Failed to notify admin about coupon redemption:', err.message);
             }
 
-            console.log(`\nReward redeemed successfully for customer ${customer.name || customer.customerId}\n`);
+            console.log(`\nReward redeemed successfully for customer ${customer.name || customer.metadata?.full_name || customer.customerId}\n`);
             console.log(`\nReward: ${reward.rewardType} (${reward.rewardValue})\n`);
             console.log(`\nPoints deducted: ${reward.pointsRequired}\n`);
             console.log(`\nCoupon code: ${coupon.code}\n`);
@@ -175,7 +177,7 @@ const redeemCoupon = async (req, res) => {
             couponCode: coupon.code, // Send the coupon code to customer
             benefit,
             customer: {
-                name: customer.name,
+                name: customer.name || customer.metadata?.full_name || 'N/A',
                 email: customer.email,
                 phone: customer.phone,
                 remainingPoints: customer.points
@@ -188,11 +190,17 @@ const redeemCoupon = async (req, res) => {
             appliedRewardsCount: customer.appliedRewards.length
         });
 
-    } catch (err) {
-        console.error('\nError redeeming coupon:', err, '\n');
-        return res.status(500).json({ success: false, message: 'Something went wrong', error: err.message });
+    } catch (error) {
+        console.error('Error redeeming coupon:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong while redeeming coupon',
+            error: error.message
+        });
     }
 };
+
+
 
 module.exports = {
     redeemCoupon

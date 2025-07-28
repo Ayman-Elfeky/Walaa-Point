@@ -19,10 +19,10 @@ async function generateCouponCode(access_token, type, amount, maximumAmount, fre
         "amount": amount,
         "maximum_amount": maximumAmount,
         "free_shipping": freeShipping,
-        "start_date": startDatee,
-        "expiry_date": expiryDatee,
+        "start_date": startDate,
+        "expiry_date": expiryDate,
         "exclude_sale_products": excludeSaleProducts,
-        "is_apply_with_offer": isApplyWithOffer
+        "is_apply_with_offer": isApplyWithOffer,
     })
     const couponObj = await fetch(`https://api.salla.dev/admin/v2/coupons`, {
         method: 'POST',

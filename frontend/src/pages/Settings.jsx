@@ -1062,24 +1062,24 @@ const Settings = () => {
                       <div className="p-2 bg-purple-100 rounded-lg">
                         <CreditCard className="h-5 w-5 text-purple-600" />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-secondary-900 dark:text-gray-100">{coupon.code}</h4>
-                        <p className="text-sm text-secondary-600 dark:text-gray-400">
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-secondary-800 dark:text-gray-400 mb-2">
                           {t('settings.customer')}: {coupon.customer?.name || coupon.customer.metadata?.full_name || 'N/A'}
                         </p>
-                        <div className="flex items-center space-x-4 rtl:space-x-reverse mt-2">
-                          <span className="text-xs text-secondary-600 dark:text-gray-400">
+                        <div className="space-y-1">
+                          <div className="text-xs text-secondary-600 dark:text-gray-400">
                             {t('settings.expiresAt')}: {new Date(coupon.expiresAt).toLocaleDateString()}
-                          </span>
-
-                          <span className="text-xs text-secondary-600 dark:text-gray-400">
+                          </div>
+                          <div className="text-xs text-secondary-600 dark:text-gray-400">
                             {t('settings.couponId')}: {coupon._id}
-                          </span>
-
+                          </div>
+                          <div className="text-xs text-secondary-600 dark:text-gray-400">
+                            {t('settings.couponCode')}: {coupon.code}
+                          </div>
                           {coupon.used && (
-                            <span className="text-xs text-secondary-600 dark:text-gray-400">
+                            <div className="text-xs text-secondary-600 dark:text-gray-400">
                               {t('settings.usedAt')}: {new Date(coupon.usedAt).toLocaleDateString()}
-                            </span>
+                            </div>
                           )}
                         </div>
                       </div>

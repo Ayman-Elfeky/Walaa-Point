@@ -16,7 +16,7 @@ const getDashboardAnalytics = async (req, res) => {
         // Date filter parameters
         const { startDate, endDate } = req.query;
         const dateFilter = {};
-        
+
         if (startDate || endDate) {
             dateFilter.createdAt = {};
             if (startDate) dateFilter.createdAt.$gte = new Date(startDate);
@@ -24,8 +24,8 @@ const getDashboardAnalytics = async (req, res) => {
         }
 
         // Customer Statistics
-        const totalCustomers = await Customer.countDocuments({ 
-            merchant: merchant._id, 
+        const totalCustomers = await Customer.countDocuments({
+            merchant: merchant._id,
             isDeleted: { $ne: true },
             ...dateFilter
         });
@@ -120,17 +120,17 @@ const getDashboardAnalytics = async (req, res) => {
             merchant: merchant._id,
             isDeleted: { $ne: true }
         })
-        .sort({ points: -1 })
-        .limit(10)
-        .select('customerId name email phone points appliedRewards createdAt');
+            .sort({ points: -1 })
+            .limit(10)
+            .select('customerId name email phone points appliedRewards createdAt');
 
         // Recent Activities
         const recentActivities = await CustomerLoyaltyActivity.find({
             merchantId: merchant._id
         })
-        .populate('customerId', 'name email customerId')
-        .sort({ createdAt: -1 })
-        .limit(20);
+            .populate('customerId', 'name email customerId')
+            .sort({ createdAt: -1 })
+            .limit(20);
 
         res.status(200).json({
             success: true,
@@ -170,7 +170,7 @@ const getCustomerParticipation = async (req, res) => {
         // Calculate date range based on period
         const now = new Date();
         let startDate;
-        
+
         switch (period) {
             case '7d':
                 startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -311,7 +311,7 @@ const getPointsAnalytics = async (req, res) => {
         // Calculate date range
         const now = new Date();
         let startDate;
-        
+
         switch (period) {
             case '7d':
                 startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -454,7 +454,7 @@ const getRewardPerformance = async (req, res) => {
         // Calculate date range
         const now = new Date();
         let startDate;
-        
+
         switch (period) {
             case '7d':
                 startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -607,7 +607,7 @@ const getCustomerGrowth = async (req, res) => {
         // Calculate date range
         const now = new Date();
         let startDate;
-        
+
         switch (period) {
             case '1month':
                 startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -638,13 +638,44 @@ const getCustomerGrowth = async (req, res) => {
                         month: { $month: "$createdAt" },
                         day: { $dayOfMonth: "$createdAt" }
                     },
-                    count: { $sum: 1 }
+                    count: { $sum: 1 },
+                    customers: {
+                        $push: {
+                            name: {
+                                $ifNull: [
+                                    "$name",
+                                    {
+                                        $ifNull: ["$metadata.full_name", "N/A"]
+                                    }
+                                ]
+                            },
+                            email: "$email",
+                            customerId: "$customerId",
+                            points: "$points",
+                            createdAt: "$createdAt"
+                        }
+                    }
                 }
             },
             {
                 $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 }
             }
         ]);
+
+        // Debug: Check a sample of raw customer data
+        // const sampleCustomer = await Customer.findOne({ 
+        //     merchant: merchant._id, 
+        //     isDeleted: { $ne: true } 
+        // }).select('name email customerId points createdAt metadata');
+        // console.log("Sample customer from database:", JSON.stringify(sampleCustomer, null, 2));
+
+        // Log customer data for debugging - safely handle empty results
+        // if (customerGrowth.length > 0 && customerGrowth[0].customers) {
+        //     console.log("Customer growth data sample:", JSON.stringify(customerGrowth[0].customers.slice(0, 2), null, 2));
+        //     console.log("Total customers found:", customerGrowth.reduce((sum, day) => sum + day.count, 0));
+        // } else {
+        //     console.log("No customer growth data found for the specified period");
+        // }
 
         res.status(200).json({
             success: true,
@@ -663,7 +694,7 @@ const getCustomerGrowth = async (req, res) => {
 const getEngagementLevels = async (req, res) => {
     try {
         const merchant = req.merchant;
-        
+
         const engagementData = await Customer.aggregate([
             {
                 $match: {
@@ -764,7 +795,7 @@ const getPointsFlow = async (req, res) => {
 const getRedemptionTrends = async (req, res) => {
     try {
         const merchant = req.merchant;
-        
+
         const redemptionTrends = await Coupon.aggregate([
             {
                 $match: {
@@ -1008,7 +1039,7 @@ const exportAnalyticsReport = async (req, res) => {
 
 // Helper functions for export
 const getDashboardData = async (merchant, period) => {
-    const customers = await Customer.find({ 
+    const customers = await Customer.find({
         merchant: merchant._id,
         isDeleted: { $ne: true }
     }).select('name email points tier totalOrders totalSpent createdAt');
@@ -1032,7 +1063,7 @@ const getRewardReport = async (merchant, period) => {
     const coupons = await Coupon.find({ merchant: merchant._id })
         .populate('reward', 'name rewardType rewardValue')
         .populate('customer', 'name email');
-    
+
     return { rewards, coupons };
 };
 

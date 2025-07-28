@@ -124,30 +124,30 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     switch (reward.rewardType) {
                         case 'percentage':
                         case 'discountOrderPercent':
-                            sallaType = 'discountOrderPercent';
+                            sallaType = 'percentage';
                             sallaAmount = reward.rewardValue;
                             sallaMaxAmount = 999999;
                             break;
                         case 'fixed':
                         case 'discountOrderPrice':
-                            sallaType = 'discountOrderPrice';
+                            sallaType = 'fixed';
                             sallaAmount = reward.rewardValue;
                             sallaMaxAmount = null;
                             break;
                         case 'shipping':
                         case 'discountShipping':
-                            sallaType = 'discountShipping';
+                            sallaType = 'fixed';
                             sallaAmount = reward.rewardValue;
                             sallaMaxAmount = null;
                             sallaFreeShipping = true;
                             break;
                         case 'cashback':
-                            sallaType = 'discountOrderPrice';
+                            sallaType = 'fixed';
                             sallaAmount = reward.rewardValue;
                             sallaMaxAmount = null;
                             break;
                         default:
-                            sallaType = 'discountOrderPercent';
+                            sallaType = 'percentage';
                             sallaAmount = reward.rewardValue;
                             sallaMaxAmount = 999999;
                     }
@@ -168,15 +168,39 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                         sallaCode = sallaResponse.data.code;
                         console.log(`✅ Generated Salla coupon code: ${sallaCode}`);
                     } else {
-                        console.log('⚠️ Failed to generate Salla coupon code, will create coupon without code');
+                        throw new Error('Salla API did not return a valid coupon code');
                     }
                 } catch (codeGenError) {
-                    console.error('Error generating Salla coupon code:', codeGenError.message);
-                    console.log('Will create coupon without code for now');
+                    console.error(`❌ CRITICAL ERROR: Failed to generate Salla coupon code: ${codeGenError.message}`);
+
+                    // Send error notification to admin
+                    try {
+                        const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
+                        const emailHtml = notification(
+                            storeLink,
+                            `خطأ في إنشاء كوبون: فشل في توليد كود كوبون من سلة للعميل ${customer.name || customer.email}. السبب: ${codeGenError.message}`,
+                            `Coupon Generation Error: Failed to generate Salla coupon code for customer ${customer.name || customer.email}. Reason: ${codeGenError.message}`,
+                            'ERROR'
+                        );
+                        await sendEmail('aywork73@gmail.com', 'Salla Coupon Generation Failed', emailHtml);
+                        console.log(`❌ Admin notified about Salla API failure for customer ${customer._id}`);
+                    } catch (notifyErr) {
+                        console.error('Failed to notify admin about Salla API failure:', notifyErr.message);
+                    }
+
+                    // Skip coupon creation and continue to next iteration
+                    console.log(`⚠️ Skipping coupon creation for customer ${customer._id} due to Salla API failure`);
+                    continue; // Skip this coupon and move to the next one (if any)
+                }
+
+                // Only create coupon if we have a valid Salla code
+                if (!sallaCode) {
+                    console.log(`❌ No valid Salla code generated, skipping coupon creation`);
+                    continue;
                 }
 
                 const coupon = await Coupon.create({
-                    code: sallaCode, // Real Salla code generated immediately, or null if failed
+                    code: sallaCode, // Only create coupon with valid Salla code
                     customer: customer._id,
                     merchant: merchant._id,
                     reward: reward._id,
@@ -195,11 +219,11 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     merchantId: merchant._id,
                     event: 'coupon_generated',
                     points: 0,
-                    metadata: { couponId: coupon._id, rewardId: reward._id, couponCode: sallaCode || 'PENDING' },
+                    metadata: { couponId: coupon._id, rewardId: reward._id, couponCode: sallaCode },
                     createdAt: new Date()
                 });
 
-                console.log(`\n📄 Coupon ${coupon._id} created for customer ${customer._id} with reward ${reward._id}\n`);
+                console.log(`\n📄 Coupon ${coupon._id} created successfully for customer ${customer._id} with Salla code: ${sallaCode}\n`);
 
                 // Send notification to customer
                 await sendCustomerNotification({
@@ -207,24 +231,27 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     merchant,
                     event: 'coupon_generated',
                     points: 0,
-                    metadata: { couponId: coupon._id, rewardId: reward._id, couponCode: sallaCode || 'PENDING' }
+                    metadata: { couponId: coupon._id, rewardId: reward._id, couponCode: sallaCode }
                 });
 
-                // Send notification to admin/user (hardcoded email)
+                // Send success notification to admin/user
                 try {
                     const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
                     const emailHtml = notification(
                         storeLink,
-                        `تم إنشاء كوبون جديد (معلق) للعميل ${customer.name || customer.email}`,
-                        `A new pending coupon has been generated for customer ${customer.name || customer.email}`,
-                        'PENDING'
+                        `تم إنشاء كوبون جديد بنجاح للعميل ${customer.name || customer.email} برمز: ${sallaCode}`,
+                        `A new coupon has been successfully generated for customer ${customer.name || customer.email} with code: ${sallaCode}`,
+                        sallaCode
                     );
-                    await sendEmail('aywork73@gmail.com', 'New Pending Coupon Generated', emailHtml);
-                    console.log(`Admin notified for pending coupon ${coupon._id}`);
+                    await sendEmail('aywork73@gmail.com', 'New Coupon Generated Successfully', emailHtml);
+                    console.log(`✅ Admin notified about successful coupon generation: ${coupon._id}`);
                 } catch (err) {
-                    console.error('Failed to notify admin:', err.message);
+                    console.error('Failed to notify admin about successful coupon:', err.message);
                 }
             }
+
+            // Summary log after coupon generation loop
+            console.log(`\n🎯 Coupon generation summary: Customer ${customer._id} earned ${newCouponsCount - prevCouponsCount} coupon(s). Points: ${customer.points}, Threshold: ${rewardThreshold}\n`);
         }
     }
 };

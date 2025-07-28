@@ -481,7 +481,7 @@
     "activeCoupons": "Active Coupons",
     "expiredCoupons": "Expired Coupons",
     "usedCoupons": "Used Coupons",
-    "couponId": "Coupon id (Not code)",
+    "couponId": "Coupon id",
     "couponCode": "Coupon Code",
     "customer": "Customer",
     "expiresAt": "Expires At",

@@ -25,7 +25,7 @@ router.delete('/:id', protect, deleteReward);
 
 // Reward application and redemption
 router.post('/apply', protect, applyRewardToCustomer);
-router.post('/redeem', protect, redeemCoupon);
+router.post('/redeem', redeemCoupon);
 
 // Get coupons
 router.get('/merchant/coupons', protect, getCoupons);

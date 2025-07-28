@@ -102,6 +102,7 @@ const onOrderCreated = async (req, res) => {
 
             // Create new customer from order data
             console.log('🔄 DEBUG: About to create new customer with totalAmount:', totalAmount);
+            console.log(data.customer?.full_name); 
             customer = new Customer({
                 customerId: data.customer.id,
                 name: data.customer?.full_name || null,
@@ -137,6 +138,9 @@ const onOrderCreated = async (req, res) => {
             console.log('🔄 DEBUG: About to update existing customer with totalAmount:', totalAmount);
             customer.orderCount = (customer.orderCount || 0) + 1;
             customer.totalSpent = (customer.totalSpent || 0) + totalAmount;
+            if(!customer.name) {
+                customer.name = data.customer?.full_name;
+            }
             await customer.save();
             console.log(`💰 Updated customer spending: ${customer.totalSpent} (added ${totalAmount})`);
         }

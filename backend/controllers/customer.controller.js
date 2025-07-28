@@ -559,10 +559,10 @@ const getRecentActivities = async (req, res) => {
         const activities = await CustomerLoyaltyActivity.find({
             merchantId: merchant._id
         })
-        .populate('customerId', 'name email')
+        .populate('customerId')
         .sort({ timestamp: -1 })
         .limit(parseInt(limit));
-
+          
         res.status(200).json({
             success: true,
             activities: activities || []

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { 
-  Settings as SettingsIcon, 
-  User, 
-  Store, 
+import {
+  Settings as SettingsIcon,
+  User,
+  Store,
   Bell,
   Globe,
   Palette,
@@ -47,7 +47,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Form States
   const [profileData, setProfileData] = useState({});
 
@@ -59,7 +59,7 @@ const Settings = () => {
     tierSilver: 1000,
     tierGold: 5000,
     tierPlatinum: 15000,
-    
+
     // Event-based settings - these match backend structure
     purchasePoints: { enabled: false, points: 0 },
     welcomePoints: { enabled: false, points: 0 },
@@ -70,7 +70,7 @@ const Settings = () => {
     profileCompletionPoints: { enabled: false, points: 0 },
     repeatPurchasePoints: { enabled: false, points: 0 },
     installAppPoints: { enabled: false, points: 0 },
-    
+
     // Threshold-based settings
     purchaseAmountThresholdPoints: {
       enabled: false,
@@ -162,13 +162,13 @@ const Settings = () => {
             // Core settings
             pointsPerCurrencyUnit: apiSettings.pointsPerCurrencyUnit || 1,
             rewardThreshold: apiSettings.rewardThreshold || 100,
-            
+
             // Tier thresholds
             tierBronze: apiSettings.tierBronze || 0,
             tierSilver: apiSettings.tierSilver || 1000,
             tierGold: apiSettings.tierGold || 5000,
             tierPlatinum: apiSettings.tierPlatinum || 15000,
-            
+
             // Event-based settings with proper structure
             purchasePoints: apiSettings.purchasePoints || { enabled: false, points: 0 },
             welcomePoints: apiSettings.welcomePoints || { enabled: false, points: 0 },
@@ -179,7 +179,7 @@ const Settings = () => {
             profileCompletionPoints: apiSettings.profileCompletionPoints || { enabled: false, points: 0 },
             repeatPurchasePoints: apiSettings.repeatPurchasePoints || { enabled: false, points: 0 },
             installAppPoints: apiSettings.installAppPoints || { enabled: false, points: 0 },
-            
+
             // Threshold-based settings
             purchaseAmountThresholdPoints: apiSettings.purchaseAmountThresholdPoints || {
               enabled: false,
@@ -212,7 +212,7 @@ const Settings = () => {
         setRewards(response.rewards);
       }
     } catch (error) {
-      console.error('Error fetching rewards:', error);
+      console.error('Error fetching rewards From Settings:', error);
     }
   };
 
@@ -220,18 +220,19 @@ const Settings = () => {
     try {
       const response = await settingsService.getCoupons();
       console.log("response from settings for coupons:", response);
-      if (response.success && response.coupons) {
+      // settingsService.getCoupons() returns response.data.data which contains {coupons: [...], summary: {...}}
+      if (response && response.coupons) {
         setCoupons(response.coupons);
       }
     } catch (error) {
-      console.error('Error fetching coupons:', error);
+      console.error('Error fetching coupons here:', error);
     }
   };
 
   const handleSave = async (section) => {
     try {
       setLoading(true);
-      
+
       if (section === 'loyalty') {
         await settingsService.updateLoyaltySettings(loyaltySettings);
         toast.success(t('settings.loyaltySettingsUpdated'));
@@ -315,7 +316,7 @@ const Settings = () => {
 
   const handleDeleteReward = async (rewardId) => {
     if (!window.confirm(t('settings.confirmDeleteReward'))) return;
-    
+
     try {
       setLoading(true);
       await settingsService.deleteReward(rewardId);
@@ -388,7 +389,7 @@ const Settings = () => {
       percentage: 'bg-green-100 text-green-600',
       fixed: 'bg-blue-100 text-blue-600',
       shipping: 'bg-purple-100 text-purple-600',
-      cashback: 'bg-pink-100 text-pink-600', 
+      cashback: 'bg-pink-100 text-pink-600',
       product: 'bg-orange-100 text-orange-600'
     };
     return colors[type] || 'bg-gray-100 text-gray-600';
@@ -483,7 +484,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-end">
         <button
           onClick={() => handleSave('profile')}
@@ -509,7 +510,7 @@ const Settings = () => {
               <h4 className="text-secondary-900 dark:text-gray-100 font-medium mb-2">{t('settings.BasePurchasePoints')}</h4>
               <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.coreSettingsForEarningPointsFromPurchases')}</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
@@ -564,7 +565,7 @@ const Settings = () => {
                 <span className="toggle-slider"></span>
               </label>
             </div>
-            
+
             {loyaltySettings.purchasePoints?.enabled && (
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                 <div>
@@ -669,9 +670,9 @@ const Settings = () => {
                       value={loyaltySettings.purchaseAmountThresholdPoints?.thresholdAmount || 0}
                       onChange={(e) => setLoyaltySettings(prev => ({
                         ...prev,
-                        purchaseAmountThresholdPoints: { 
-                          ...prev.purchaseAmountThresholdPoints, 
-                          thresholdAmount: parseInt(e.target.value) 
+                        purchaseAmountThresholdPoints: {
+                          ...prev.purchaseAmountThresholdPoints,
+                          thresholdAmount: parseInt(e.target.value)
                         }
                       }))}
                     />
@@ -687,9 +688,9 @@ const Settings = () => {
                       value={loyaltySettings.purchaseAmountThresholdPoints?.points || 0}
                       onChange={(e) => setLoyaltySettings(prev => ({
                         ...prev,
-                        purchaseAmountThresholdPoints: { 
-                          ...prev.purchaseAmountThresholdPoints, 
-                          points: parseInt(e.target.value) 
+                        purchaseAmountThresholdPoints: {
+                          ...prev.purchaseAmountThresholdPoints,
+                          points: parseInt(e.target.value)
                         }
                       }))}
                     />
@@ -743,7 +744,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-end">
         <button
           onClick={() => handleSave('loyalty')}
@@ -822,7 +823,7 @@ const Settings = () => {
           ))}
         </div>
       </div>
-      
+
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
         <div className="flex items-start">
           <Bell className="h-5 w-5 text-blue-500 mr-3 rtl:mr-0 rtl:ml-3 mt-0.5 flex-shrink-0" />
@@ -834,7 +835,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-end">
         <button
           onClick={() => handleSave('notifications')}
@@ -910,7 +911,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-end">
         <button
           onClick={() => handleSave('appearance')}
@@ -940,6 +941,7 @@ const Settings = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
+              {console.log(coupons)}
               <p className="text-sm text-secondary-600 dark:text-gray-400">{t('settings.totalCoupons')}</p>
               <p className="text-2xl font-bold text-secondary-900 dark:text-gray-100">{coupons.length}</p>
             </div>
@@ -1063,13 +1065,18 @@ const Settings = () => {
                       <div>
                         <h4 className="font-medium text-secondary-900 dark:text-gray-100">{coupon.code}</h4>
                         <p className="text-sm text-secondary-600 dark:text-gray-400">
-                          {t('settings.customer')}: {coupon.customer?.name || 'N/A'}
+                          {t('settings.customer')}: {coupon.customer?.name || coupon.customer.metadata?.full_name || 'N/A'}
                         </p>
                         <div className="flex items-center space-x-4 rtl:space-x-reverse mt-2">
                           <span className="text-xs text-secondary-600 dark:text-gray-400">
                             {t('settings.expiresAt')}: {new Date(coupon.expiresAt).toLocaleDateString()}
                           </span>
-                          {coupon.used && coupon.usedAt && (
+                  
+                            <span className="text-xs text-secondary-600 dark:text-gray-400">
+                              {t('settings.couponId')}: {coupon._id}
+                            </span>
+                        
+                          {coupon.used && (
                             <span className="text-xs text-secondary-600 dark:text-gray-400">
                               {t('settings.usedAt')}: {new Date(coupon.usedAt).toLocaleDateString()}
                             </span>
@@ -1079,15 +1086,14 @@ const Settings = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      coupon.used 
-                        ? 'bg-gray-100 text-gray-800' 
+                    <span className={`px-2 py-1 rounded-full text-xs ${coupon.used
+                        ? 'bg-gray-100 text-gray-800'
                         : new Date(coupon.expiresAt) > new Date()
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                    }`}>
-                      {coupon.used 
-                        ? t('settings.used') 
+                      }`}>
+                      {coupon.used
+                        ? t('settings.used')
                         : new Date(coupon.expiresAt) > new Date()
                           ? t('settings.active')
                           : t('settings.expired')
@@ -1104,7 +1110,7 @@ const Settings = () => {
       {/* Modern Add/Edit Reward Modal */}
       {showAddRewardModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1138,17 +1144,15 @@ const Settings = () => {
               <div className="p-8 space-y-8">
                 {/* Form Status Indicator - Only show if fields have been touched */}
                 {(fieldsTouched.name || fieldsTouched.description) && (
-                  <div className={`p-4 rounded-lg border-2 transition-all ${
-                    rewardForm.name?.trim() && rewardForm.description?.trim()
+                  <div className={`p-4 rounded-lg border-2 transition-all ${rewardForm.name?.trim() && rewardForm.description?.trim()
                       ? 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800'
                       : 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800'
-                  }`}>
+                    }`}>
                     <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        rewardForm.name?.trim() && rewardForm.description?.trim()
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${rewardForm.name?.trim() && rewardForm.description?.trim()
                           ? 'bg-green-500 text-white'
                           : 'bg-yellow-500 text-white'
-                      }`}>
+                        }`}>
                         {rewardForm.name?.trim() && rewardForm.description?.trim() ? (
                           <Check className="h-5 w-5" />
                         ) : (
@@ -1156,21 +1160,19 @@ const Settings = () => {
                         )}
                       </div>
                       <div>
-                        <h4 className={`font-semibold ${
-                          rewardForm.name?.trim() && rewardForm.description?.trim()
+                        <h4 className={`font-semibold ${rewardForm.name?.trim() && rewardForm.description?.trim()
                             ? 'text-green-800 dark:text-green-200'
                             : 'text-yellow-800 dark:text-yellow-200'
-                        }`}>
+                          }`}>
                           {rewardForm.name?.trim() && rewardForm.description?.trim()
                             ? '✅ Ready to Save!'
                             : '⚠️ Complete Required Fields'
                           }
                         </h4>
-                        <p className={`text-sm ${
-                          rewardForm.name?.trim() && rewardForm.description?.trim()
+                        <p className={`text-sm ${rewardForm.name?.trim() && rewardForm.description?.trim()
                             ? 'text-green-600 dark:text-green-300'
                             : 'text-yellow-600 dark:text-yellow-300'
-                        }`}>
+                          }`}>
                           {rewardForm.name?.trim() && rewardForm.description?.trim()
                             ? 'Your reward is ready to be saved. Click the save button below.'
                             : 'Please fill in the reward name and description to enable saving.'
@@ -1186,7 +1188,7 @@ const Settings = () => {
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
                     <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Choose Reward Type</h4>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[
                       {
@@ -1232,18 +1234,17 @@ const Settings = () => {
                     ].map((option) => {
                       const Icon = option.icon;
                       const isSelected = rewardForm.rewardType === option.type;
-                      
+
                       return (
                         <motion.div
                           key={option.type}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => setRewardForm(prev => ({ ...prev, rewardType: option.type }))}
-                          className={`cursor-pointer rounded-xl border-2 transition-all ${
-                            isSelected 
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
+                          className={`cursor-pointer rounded-xl border-2 transition-all ${isSelected
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg'
                               : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                          }`}
+                            }`}
                         >
                           <div className="p-6">
                             <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${option.color} flex items-center justify-center mb-4`}>
@@ -1267,65 +1268,63 @@ const Settings = () => {
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
                     <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Basic Information</h4>
                   </div>
-                  
+
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
-                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div className="space-y-4">
-                         <div>
-                           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                             {t('settings.rewardName')} <span className="text-red-500">*</span>
-                           </label>
-                           <input
-                             type="text"
-                             className={`w-full px-4 py-3 rounded-lg border transition-all ${
-                               fieldsTouched.name
-                                 ? rewardForm.name?.trim() 
-                                   ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500' 
-                                   : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
-                                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                             }`}
-                             value={rewardForm.name}
-                             onChange={(e) => {
-                               setRewardForm(prev => ({ ...prev, name: e.target.value }));
-                               setFieldsTouched(prev => ({ ...prev, name: true }));
-                             }}
-                             onBlur={() => setFieldsTouched(prev => ({ ...prev, name: true }))}
-                             placeholder={t('settings.enterRewardName')}
-                           />
-                           {fieldsTouched.name && !rewardForm.name?.trim() && (
-                             <p className="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center">
-                               <span className="mr-1">⚠️</span> This field is required
-                             </p>
-                           )}
-                         </div>
-                         <div>
-                           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                             {t('settings.rewardDescription')} <span className="text-red-500">*</span>
-                           </label>
-                           <textarea
-                             className={`w-full px-4 py-3 rounded-lg border transition-all ${
-                               fieldsTouched.description
-                                 ? rewardForm.description?.trim() 
-                                   ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500' 
-                                   : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
-                                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                             }`}
-                             rows="3"
-                             value={rewardForm.description}
-                             onChange={(e) => {
-                               setRewardForm(prev => ({ ...prev, description: e.target.value }));
-                               setFieldsTouched(prev => ({ ...prev, description: true }));
-                             }}
-                             onBlur={() => setFieldsTouched(prev => ({ ...prev, description: true }))}
-                             placeholder={t('settings.enterDescription')}
-                           />
-                           {fieldsTouched.description && !rewardForm.description?.trim() && (
-                             <p className="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center">
-                               <span className="mr-1">⚠️</span> This field is required
-                             </p>
-                           )}
-                         </div>
-                       </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                            {t('settings.rewardName')} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            className={`w-full px-4 py-3 rounded-lg border transition-all ${fieldsTouched.name
+                                ? rewardForm.name?.trim()
+                                  ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500'
+                                  : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
+                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                              }`}
+                            value={rewardForm.name}
+                            onChange={(e) => {
+                              setRewardForm(prev => ({ ...prev, name: e.target.value }));
+                              setFieldsTouched(prev => ({ ...prev, name: true }));
+                            }}
+                            onBlur={() => setFieldsTouched(prev => ({ ...prev, name: true }))}
+                            placeholder={t('settings.enterRewardName')}
+                          />
+                          {fieldsTouched.name && !rewardForm.name?.trim() && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center">
+                              <span className="mr-1">⚠️</span> This field is required
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                            {t('settings.rewardDescription')} <span className="text-red-500">*</span>
+                          </label>
+                          <textarea
+                            className={`w-full px-4 py-3 rounded-lg border transition-all ${fieldsTouched.description
+                                ? rewardForm.description?.trim()
+                                  ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500'
+                                  : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
+                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                              }`}
+                            rows="3"
+                            value={rewardForm.description}
+                            onChange={(e) => {
+                              setRewardForm(prev => ({ ...prev, description: e.target.value }));
+                              setFieldsTouched(prev => ({ ...prev, description: true }));
+                            }}
+                            onBlur={() => setFieldsTouched(prev => ({ ...prev, description: true }))}
+                            placeholder={t('settings.enterDescription')}
+                          />
+                          {fieldsTouched.description && !rewardForm.description?.trim() && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center">
+                              <span className="mr-1">⚠️</span> This field is required
+                            </p>
+                          )}
+                        </div>
+                      </div>
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -1362,21 +1361,21 @@ const Settings = () => {
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
                     <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Reward Configuration</h4>
                   </div>
-                  
+
                   <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {/* Dynamic reward value field based on type */}
                       {rewardForm.rewardType !== 'shipping' && (
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                         {rewardForm.rewardType === 'percentage' 
-                               ? 'Discount Percentage (%)' 
-                               : rewardForm.rewardType === 'fixed' 
-                                 ? 'Discount Amount (SAR)'
-                                 : rewardForm.rewardType === 'cashback'
-                                   ? 'Cashback Amount (SAR)'
-                                   : t('settings.rewardValue')
-                             } *
+                            {rewardForm.rewardType === 'percentage'
+                              ? 'Discount Percentage (%)'
+                              : rewardForm.rewardType === 'fixed'
+                                ? 'Discount Amount (SAR)'
+                                : rewardForm.rewardType === 'cashback'
+                                  ? 'Cashback Amount (SAR)'
+                                  : t('settings.rewardValue')
+                            } *
                           </label>
                           <div className="relative">
                             <input
@@ -1400,7 +1399,7 @@ const Settings = () => {
                           </p>
                         </div>
                       )}
-                      
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           {t('settings.pointsRequired')} *
@@ -1453,7 +1452,7 @@ const Settings = () => {
                         <div>
                           <h6 className="font-semibold text-gray-900 dark:text-gray-100">Preview:</h6>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {rewardForm.name || 'Reward Name'} - {formatRewardValue(rewardForm.rewardType, rewardForm.rewardValue)} 
+                            {rewardForm.name || 'Reward Name'} - {formatRewardValue(rewardForm.rewardType, rewardForm.rewardValue)}
                             {' '}({rewardForm.pointsRequired} points required)
                             {rewardForm.minOrderValue > 0 && ` • Min order: ${rewardForm.minOrderValue} SAR`}
                           </p>
@@ -1469,7 +1468,7 @@ const Settings = () => {
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
                     <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Advanced Settings</h4>
                   </div>
-                  
+
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       <div>
@@ -1489,7 +1488,7 @@ const Settings = () => {
                           <option value={999}>Unlimited</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Total Usage Limit
@@ -1503,7 +1502,7 @@ const Settings = () => {
                           placeholder="1000"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Valid Until
@@ -1515,7 +1514,7 @@ const Settings = () => {
                           onChange={(e) => setRewardForm(prev => ({ ...prev, validUntil: e.target.value }))}
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Category
@@ -1545,7 +1544,7 @@ const Settings = () => {
                       </div>
                       <Plus className="h-5 w-5 text-gray-400 group-open:rotate-45 transition-transform" />
                     </summary>
-                    
+
                     <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-6 border border-yellow-200 dark:border-yellow-800">
                       <div className="space-y-3">
                         {rewardForm.terms.map((term, index) => (
@@ -1593,49 +1592,48 @@ const Settings = () => {
               </div>
             </div>
 
-                         {/* Footer Actions */}
-             <div className="bg-gray-50 dark:bg-gray-800 px-8 py-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-               <div className="flex justify-end items-center">
-                 <div className="flex space-x-3 rtl:space-x-reverse">
-                   <button
-                     onClick={() => {
-                       setShowAddRewardModal(false);
-                       setEditingReward(null);
-                       resetRewardForm();
-                     }}
-                     className="px-6 py-3 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors font-medium"
-                   >
-                     {t('common.cancel')}
-                   </button>
-                   <motion.button
-                     whileHover={{ scale: 1.02 }}
-                     whileTap={{ scale: 0.98 }}
-                     onClick={editingReward ? handleUpdateReward : handleAddReward}
-                     disabled={loading}
-                     className={`px-8 py-3 rounded-lg transition-all font-semibold shadow-lg flex items-center space-x-2 ${
-                       loading
-                         ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
-                         : rewardForm.name?.trim() && rewardForm.description?.trim()
-                           ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
-                           : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                     }`}
-                     title={!rewardForm.name?.trim() || !rewardForm.description?.trim() ? 'Please fill in reward name and description to save' : 'Save your reward'}
-                   >
-                     {loading ? (
-                       <>
-                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                         <span>Saving...</span>
-                       </>
-                     ) : (
-                       <>
-                         <Save className="h-5 w-5" />
-                         <span>{editingReward ? t('settings.updateReward') : t('settings.saveReward')}</span>
-                       </>
-                     )}
-                   </motion.button>
-                 </div>
-               </div>
-             </div>
+            {/* Footer Actions */}
+            <div className="bg-gray-50 dark:bg-gray-800 px-8 py-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex justify-end items-center">
+                <div className="flex space-x-3 rtl:space-x-reverse">
+                  <button
+                    onClick={() => {
+                      setShowAddRewardModal(false);
+                      setEditingReward(null);
+                      resetRewardForm();
+                    }}
+                    className="px-6 py-3 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors font-medium"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={editingReward ? handleUpdateReward : handleAddReward}
+                    disabled={loading}
+                    className={`px-8 py-3 rounded-lg transition-all font-semibold shadow-lg flex items-center space-x-2 ${loading
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
+                        : rewardForm.name?.trim() && rewardForm.description?.trim()
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
+                          : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      }`}
+                    title={!rewardForm.name?.trim() || !rewardForm.description?.trim() ? 'Please fill in reward name and description to save' : 'Save your reward'}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-5 w-5" />
+                        <span>{editingReward ? t('settings.updateReward') : t('settings.saveReward')}</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       )}
@@ -1712,7 +1710,7 @@ const Settings = () => {
               <span className="toggle-slider"></span>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center">
               <Bell className="h-5 w-5 text-secondary-400 mr-3 rtl:mr-0 rtl:ml-3" />
@@ -1732,7 +1730,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-end">
         <button
           onClick={() => handleSave('security')}
@@ -1784,11 +1782,10 @@ const Settings = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
-                    activeTab === tab.id
+                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${activeTab === tab.id
                       ? 'bg-primary-100 text-primary-700 border border-primary-200'
                       : 'text-secondary-600 hover:bg-secondary-50'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-5 w-5 mr-3 rtl:mr-0 rtl:ml-3" />
                   {tab.name}

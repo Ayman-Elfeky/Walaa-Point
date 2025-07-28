@@ -55,7 +55,7 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
 
     // Log tier change if it occurred
     if (oldTier !== newTier) {
-        console.log(`\n🎉 Customer ${customerId} tier upgraded from ${oldTier} to ${newTier}!\n`);
+        console.log(`\n🎉 Customer ${customer._id} tier upgraded from ${oldTier} to ${newTier}!\n`);
     }
 
     await CustomerLoyaltyActivity.create({
@@ -108,17 +108,17 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     }
                     continue;
                 }
-                // Generate coupon code
-                const couponCode = generateCouponCode();
-                // Create coupon
+                
+                // Create coupon with null code (Flow 2: On-demand generation)
+                // The actual Salla coupon code will be generated when customer redeems
                 const coupon = await Coupon.create({
-                    code: couponCode,
+                    code: null, // No Salla code generated yet
                     customer: customer._id,
                     merchant: merchant._id,
                     reward: reward._id,
-                    isRedeemed: false,
-                    issuedAt: new Date(),
-                    expiresAt: reward.expiryDate || null
+                    used: false,
+                    createdAt: new Date(),
+                    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
                 });
                 // Optionally, push coupon to customer (if you keep an array)
                 // customer.coupons = customer.coupons || [];
@@ -126,14 +126,16 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                 // await customer.save();
 
                 // Log coupon generation in activity
-                await CustomerLoyaltyActivity.create({
-                    customerId,
+                let res = await CustomerLoyaltyActivity.create({
+                    customerId: customer._id, // Fixed: use customer._id instead of customerId
                     merchantId: merchant._id,
                     event: 'coupon_generated',
                     points: 0,
-                    metadata: { couponCode, rewardId: reward._id },
+                    metadata: { couponId: coupon._id, rewardId: reward._id, pending: true },
                     createdAt: new Date()
                 });
+
+                console.log(`\n📄 Coupon ${coupon._id} created for customer ${customer._id} with reward ${reward._id}\n`);
 
                 // Send notification to customer
                 await sendCustomerNotification({
@@ -141,7 +143,7 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     merchant,
                     event: 'coupon_generated',
                     points: 0,
-                    metadata: { couponCode, rewardId: reward._id }
+                    metadata: { couponId: coupon._id, rewardId: reward._id, pending: true }
                 });
 
                 // Send notification to admin/user (hardcoded email)
@@ -149,12 +151,12 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
                     const emailHtml = notification(
                         storeLink,
-                        `تم إنشاء كوبون جديد للعميل ${customer.name || customer.email}: ${couponCode}`,
-                        `A new coupon has been generated for customer ${customer.name || customer.email}: ${couponCode}`,
-                        couponCode
+                        `تم إنشاء كوبون جديد (معلق) للعميل ${customer.name || customer.email}`,
+                        `A new pending coupon has been generated for customer ${customer.name || customer.email}`,
+                        'PENDING'
                     );
-                    await sendEmail('aywork73@gmail.com', 'New Coupon Generated', emailHtml);
-                    console.log(`Admin notified for coupon ${couponCode}`);
+                    await sendEmail('aywork73@gmail.com', 'New Pending Coupon Generated', emailHtml);
+                    console.log(`Admin notified for pending coupon ${coupon._id}`);
                 } catch (err) {
                     console.error('Failed to notify admin:', err.message);
                 }
@@ -186,7 +188,7 @@ const deductPoints = async ({ merchant, customer, points, event, metadata = {} }
 
     // Log tier change if it occurred
     if (oldTier !== newTier) {
-        console.log(`\n📉 Customer ${customerId} tier changed from ${oldTier} to ${newTier} due to point deduction\n`);
+        console.log(`\n📉 Customer ${customer._id} tier changed from ${oldTier} to ${newTier} due to point deduction\n`);
     }
 
     await CustomerLoyaltyActivity.create({
@@ -619,6 +621,7 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
             result.message = `Unknown event: ${event}`;
     }
 
+    console.log("DEBUG: Result from loyaltyEngine:", result);
     return result;
 };
 

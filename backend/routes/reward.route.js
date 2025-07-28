@@ -11,7 +11,8 @@ const {
     applyRewardToCustomer, 
     applyShareRewardToCustomer, 
     generateShareableLink,
-    getCoupons
+    getCoupons,
+    getCustomerCoupons
 } = require('../controllers/reward.controller');
 const { redeemCoupon } = require('../controllers/redeemCoupon.controller');
 
@@ -27,7 +28,8 @@ router.post('/apply', protect, applyRewardToCustomer);
 router.post('/redeem', protect, redeemCoupon);
 
 // Get coupons
-router.get('/coupons', protect, getCoupons)
+router.get('/merchant/coupons', protect, getCoupons);
+router.get('/customer/:customerId/coupons', protect, getCustomerCoupons);
 
 // Share functionality
 router.get('/generate-share-link/:customerId', protect, generateShareableLink);

@@ -596,21 +596,131 @@ const applyRewardToCustomer = async (req, res) => {
 
 const getCoupons = async (req, res) => {
     try {
-        const accessToken = req.headers.authorization?.split(' ')[1];
-        if (!accessToken) {
-            return res.status(401).json({ success: false, message: 'Access token is required' });
+        const merchant = req.merchant;
+
+        if (!merchant) {
+            return res.status(401).json({ success: false, message: 'Merchant authentication required' });
         }
 
         const options = req.query || {};
-        const coupons = await loyaltyEngine.getCoupons(accessToken, options);
+        
+        // Build query filters
+        let query = { merchant: merchant._id };
+        
+        // Add filters based on query parameters
+        if (options.used !== undefined) {
+            query.used = options.used === 'true';
+        }
+        
+        if (options.expired !== undefined) {
+            if (options.expired === 'true') {
+                query.expiresAt = { $lte: new Date() };
+                query.used = false;
+            } else {
+                query.expiresAt = { $gt: new Date() };
+            }
+        }
+
+        // Fetch coupons from database
+        const coupons = await Coupon.find(query)
+            .populate('reward', 'name description rewardType rewardValue pointsRequired')
+            .populate('customer')
+            .sort({ createdAt: -1 })
+            .limit(options.limit ? parseInt(options.limit) : 100);
+
+        // Get summary statistics
+        const totalCoupons = await Coupon.countDocuments({ merchant: merchant._id });
+        const activeCoupons = await Coupon.countDocuments({ 
+            merchant: merchant._id, 
+            used: false, 
+            expiresAt: { $gt: new Date() } 
+        });
+        const usedCoupons = await Coupon.countDocuments({ 
+            merchant: merchant._id, 
+            used: true 
+        });
+        const expiredCoupons = await Coupon.countDocuments({ 
+            merchant: merchant._id, 
+            used: false, 
+            expiresAt: { $lte: new Date() } 
+        });
 
         return res.status(200).json({
             success: true,
             message: 'Coupons retrieved successfully',
-            data: coupons
+            data: {
+                coupons,
+                summary: {
+                    total: totalCoupons,
+                    active: activeCoupons,
+                    used: usedCoupons,
+                    expired: expiredCoupons
+                }
+            }
         });
     } catch (error) {
         console.error('Error fetching coupons:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong',
+            error: error.message
+        });
+    }
+};
+
+const getCustomerCoupons = async (req, res) => {
+    try {
+        const { customerId } = req.params;
+        const merchant = req.merchant;
+
+        if (!customerId) {
+            return res.status(400).json({ success: false, message: 'Customer ID is required' });
+        }
+
+        // Find the customer
+        const customer = await Customer.findOne({ customerId, merchant: merchant._id });
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        // Get all coupons for this customer
+        const coupons = await Coupon.find({
+            customer: customer._id,
+            merchant: merchant._id
+        })
+        .populate('reward', 'name description rewardType rewardValue pointsRequired')
+        .sort({ createdAt: -1 });
+
+        // Categorize coupons
+        const availableCoupons = coupons.filter(c => !c.used && new Date(c.expiresAt) > new Date());
+        const usedCoupons = coupons.filter(c => c.used);
+        const expiredCoupons = coupons.filter(c => !c.used && new Date(c.expiresAt) <= new Date());
+
+        return res.status(200).json({
+            success: true,
+            message: 'Customer coupons retrieved successfully',
+            data: {
+                customer: {
+                    name: customer.name,
+                    email: customer.email,
+                    points: customer.points
+                },
+                coupons: {
+                    available: availableCoupons,
+                    used: usedCoupons,
+                    expired: expiredCoupons
+                },
+                summary: {
+                    totalCoupons: coupons.length,
+                    availableCount: availableCoupons.length,
+                    usedCount: usedCoupons.length,
+                    expiredCount: expiredCoupons.length
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching customer coupons:', error.message);
         return res.status(500).json({
             success: false,
             message: 'Something went wrong',
@@ -628,5 +738,6 @@ module.exports = {
     applyRewardToCustomer,
     applyShareRewardToCustomer,
     generateShareableLink,
-    getCoupons
+    getCoupons,
+    getCustomerCoupons
 };

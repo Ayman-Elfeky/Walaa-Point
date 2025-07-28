@@ -2,6 +2,7 @@ const Coupon = require('../models/coupon.model');
 const Reward = require('../models/reward.model');
 const Customer = require('../models/customer.model');
 const CustomerLoyaltyActivity = require('../models/customerLoyalityActivitySchema.model');
+const generateCouponCode = require('../utils/generateCouponCode');
 const mongoose = require('mongoose');
 
 const redeemCoupon = async (req, res) => {
@@ -9,23 +10,24 @@ const redeemCoupon = async (req, res) => {
         console.log('\nRedeeming coupon\n');
         console.log('\nRequest body:', JSON.stringify(req.body, null, 2), '\n');
 
-        const { code, orderId } = req.body;
+        const { couponId, orderId } = req.body;
         const merchant = req.merchant;
-
-        if (!code) {
-            console.log('\nMissing coupon code\n');
-            return res.status(400).json({ success: false, message: 'Coupon code is required' });
+        
+        if (!couponId) {
+            console.log('\nMissing coupon ID\n');
+            return res.status(400).json({ success: false, message: 'Coupon ID is required' });
         }
-        const coupon = await Coupon.findOne({ code, merchant: merchant._id })
+        
+        const coupon = await Coupon.findOne({ _id: couponId, merchant: merchant._id })
             .populate('reward')
             .populate('customer');
 
         if (!coupon) {
-            console.log(`\nCoupon not found: ${code}\n`);
+            console.log(`\nCoupon not found: ${couponId}\n`);
             return res.status(404).json({ success: false, message: 'Coupon not found' });
         }
 
-        console.log(`\nCoupon found: ${coupon.code}\n`);
+        console.log(`\nCoupon found: ${coupon._id} (Code: ${coupon.code || 'PENDING'})\n`);
 
         if (coupon.used) {
             console.log('\nCoupon already used\n');
@@ -47,6 +49,74 @@ const redeemCoupon = async (req, res) => {
         }
 
         console.log(`\nCustomer has ${customer.points} points, reward requires ${reward.pointsRequired} points\n`);
+
+        // Generate Salla coupon code if not already generated (Flow 2: On-demand generation)
+        if (!coupon.code) {
+            console.log('\nCoupon code is null, generating Salla coupon code now...\n');
+            
+            try {
+                // Calculate expiry date (30 days from now)
+                const startDate = new Date().toISOString().split('T')[0];
+                const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                
+                // Map reward types to Salla API format
+                let sallaType, sallaAmount, sallaMaxAmount, sallaFreeShipping = false;
+                
+                switch (reward.rewardType) {
+                    case 'percentage':
+                        sallaType = 'percentage';
+                        sallaAmount = reward.rewardValue;
+                        sallaMaxAmount = 1000; // Default max amount for percentage discounts
+                        break;
+                    case 'fixed':
+                        sallaType = 'fixed';
+                        sallaAmount = reward.rewardValue;
+                        sallaMaxAmount = null;
+                        break;
+                    case 'shipping':
+                        sallaType = 'fixed';
+                        sallaAmount = 0;
+                        sallaFreeShipping = true;
+                        break;
+                    case 'cashback':
+                        sallaType = 'fixed';
+                        sallaAmount = reward.rewardValue;
+                        sallaMaxAmount = null;
+                        break;
+                    default:
+                        sallaType = 'percentage';
+                        sallaAmount = 10;
+                        sallaMaxAmount = 100;
+                }
+                
+                // Generate Salla coupon code
+                const sallaResponse = await generateCouponCode(
+                    merchant.accessToken,
+                    sallaType,
+                    sallaAmount,
+                    sallaMaxAmount,
+                    sallaFreeShipping,
+                    startDate,
+                    expiryDate,
+                    'LOYALTY'
+                );
+                
+                if (sallaResponse && sallaResponse.data && sallaResponse.data.code) {
+                    coupon.code = sallaResponse.data.code;
+                    console.log(`\nSalla coupon code generated: ${coupon.code}\n`);
+                } else {
+                    throw new Error('Failed to generate Salla coupon code');
+                }
+                
+            } catch (codeGenError) {
+                console.error('\nError generating Salla coupon code:', codeGenError.message, '\n');
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Failed to generate coupon code from Salla',
+                    error: codeGenError.message 
+                });
+            }
+        }
 
         // Start a MongoDB session for transaction
         const session = await mongoose.startSession();
@@ -95,9 +165,9 @@ const redeemCoupon = async (req, res) => {
             // Send notification to customer
             try {
                 const storeLink = merchant.merchantDomain || `https://${merchant.merchantUsername}.salla.sa`;
-                const subjectArabic = 'تم استخدام كوبون مكافأة!';
-                const contentArabic = `تم استخدام كوبون مكافأة (${coupon.code}) بنجاح في متجر ${merchant.merchantName}`;
-                const contentEnglish = `Your reward coupon (${coupon.code}) was successfully redeemed at ${merchant.merchantName}`;
+                const subjectArabic = 'تم تفعيل كوبون مكافأة!';
+                const contentArabic = `تم تفعيل كوبون مكافأة (${coupon.code}) بنجاح في متجر ${merchant.merchantName}, يمكنكم استخدامه في طلبكم القادم قبل ${new Date(coupon.expiresAt).toLocaleDateString('ar-EG')}`;
+                const contentEnglish = `Your reward coupon (${coupon.code}) was successfully redeemed at ${merchant.merchantName}, you can use it on your next order before ${new Date(coupon.expiresAt).toLocaleDateString('en-US')}`;
                 const emailHtml = require('../utils/templates/notification.template').notification(storeLink, contentArabic, contentEnglish, coupon.code);
                 if (customer.email) {
                     await require('../utils/sendEmail').sendEmail(customer.email, subjectArabic, emailHtml);

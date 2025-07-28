@@ -416,7 +416,7 @@ const Customers = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
           {filteredCustomers.map((customer, index) => {
             const customerAvatar = customer.avatar || '';
-            const customerName = customer.name || 'Unknown Customer';
+            const customerName = customer.name || customer.metadata.full_name || 'Unknown Customer';
             const customerEmail = customer.email || 'No email';
             const customerPhone = `${customer.metadata.mobile_code}${customer.metadata.mobile}` || 'No phone';
             const customerPoints = customer.points || 0;

@@ -136,14 +136,46 @@ export const deleteReward = async (rewardId) => {
 };
 
 /**
- * Get all coupons
+ * Get all coupons for the merchant
  */
 export const getCoupons = async (params = {}) => {
+  console.log("Fetching coupons with params:", params);
   try {
-    const response = await api.get('/reward/coupons', { params });
-    return response.data;
+    console.log("Fetching coupons from:", '/reward/merchant/coupons');
+    const response = await api.get('/reward/merchant/coupons', { params });
+    console.log("Coupons response:", response.data.data);
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching coupons:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get coupons for a specific customer
+ */
+export const getCustomerCoupons = async (customerId) => {
+  try {
+    const response = await api.get(`/reward/customer/${customerId}/coupons`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching customer coupons:', error);
+    throw error;
+  }
+};
+
+/**
+ * Redeem a coupon
+ */
+export const redeemCoupon = async (couponId, orderId = null) => {
+  try {
+    const response = await api.post('/reward/redeem', {
+      couponId,
+      orderId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error redeeming coupon:', error);
     throw error;
   }
 }; 

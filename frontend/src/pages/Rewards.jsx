@@ -55,7 +55,7 @@ const Rewards = () => {
       console.log("Response from the backend:", response.rewards)
       setRewards(response.rewards || []);
     } catch (error) {
-      console.error('Error fetching rewards:', error);
+      console.error('Error fetching rewards From rewards:', error);
       setRewards([]);
       toast.error(t('rewards.failedToFetchRewards'));
     } finally {

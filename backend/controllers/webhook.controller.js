@@ -52,6 +52,7 @@ const webhookLogic = (req, res) => {
 };
 
 const onOrderCreated = async (req, res) => {
+    console.log("\nEnter onOrderCreated...\n", req.body.data.customer);
     try {
         console.log('📦 Order created webhook received');
         const { merchant: merchantId, data } = req.body;
@@ -95,7 +96,7 @@ const onOrderCreated = async (req, res) => {
         }
 
         let customer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });
-
+        console.log("Customer is Found and create new order: ", customer.customerId)
         if (!customer) {
             console.log('👤 Customer not found, creating new customer:', data.customer.id);
 
@@ -152,6 +153,7 @@ const onOrderCreated = async (req, res) => {
         console.log('🔍 DEBUG: Merchant loyalty settings:', JSON.stringify(merchantFound.loyaltySettings, null, 2));
         console.log('🔍 DEBUG: Customer before purchase:', `ID: ${customer.customerId}, Current Points: ${customer.points || 0}`);
         
+        console.log('🔍 DEBUG: Loyalty engine result before');
         const result = await loyaltyEngine({
             event: 'purchase',
             merchant: merchantFound,
@@ -159,7 +161,7 @@ const onOrderCreated = async (req, res) => {
             metadata
         });
         
-        console.log('🔍 DEBUG: Loyalty engine result:', JSON.stringify(result, null, 2));
+        console.log('🔍 DEBUG: Loyalty engine result after:', JSON.stringify(result, null, 2));
         
         // Fetch updated customer to show final points
         const updatedCustomer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });

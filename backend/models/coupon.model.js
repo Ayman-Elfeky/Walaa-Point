@@ -54,20 +54,15 @@ const couponSchema = new mongoose.Schema({
     }
 });
 
-// Custom validation: Code is required when coupon is used
-couponSchema.pre('save', function(next) {
-    if (this.used && !this.code) {
-        return next(new Error('Code is required when marking coupon as used'));
-    }
-    next();
-});
+// Note: In Flow 1, code should always exist when coupon is created
+// Removed validation that code is required when used since codes are generated upfront
 
 // Custom validation: Ensure code uniqueness when not null (backup to partial index)
-couponSchema.pre('save', async function(next) {
+couponSchema.pre('save', async function (next) {
     if (this.code && this.isModified('code')) {
-        const existingCoupon = await this.constructor.findOne({ 
-            code: this.code, 
-            _id: { $ne: this._id } 
+        const existingCoupon = await this.constructor.findOne({
+            code: this.code,
+            _id: { $ne: this._id }
         });
         if (existingCoupon) {
             return next(new Error('Coupon code must be unique'));

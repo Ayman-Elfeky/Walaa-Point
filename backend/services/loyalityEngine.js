@@ -35,7 +35,7 @@ const calculatePurchasePoints = (amount, pointsPerCurrencyUnit) => {
 // Reusable function to award points and save log
 const awardPoints = async ({ merchant, customer, points, event, metadata = {} }) => {
     console.log(`🔍 DEBUG: awardPoints called - customerId: ${customer._id}, points: ${points}, event: ${event}`);
-    
+
     if (!customer) {
         console.log(`❌ ERROR: Customer object not provided`);
         return;
@@ -108,11 +108,75 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     }
                     continue;
                 }
-                
-                // Create coupon with null code (Flow 2: On-demand generation)
-                // The actual Salla coupon code will be generated when customer redeems
+
+                // Create coupon with real Salla code (Flow 1: Immediate generation)
+                // Generate Salla coupon code immediately when points are awarded
+                let sallaCode = null;
+                try {
+                    // Calculate expiry date (30 days from now)
+                    const startDate = new Date().toISOString().split('T')[0];
+                    console.log(startDate)
+                    const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+                    // Map reward types to Salla API format
+                    let sallaType, sallaAmount, sallaMaxAmount, sallaFreeShipping = false;
+
+                    switch (reward.rewardType) {
+                        case 'percentage':
+                        case 'discountOrderPercent':
+                            sallaType = 'discountOrderPercent';
+                            sallaAmount = reward.rewardValue;
+                            sallaMaxAmount = 999999;
+                            break;
+                        case 'fixed':
+                        case 'discountOrderPrice':
+                            sallaType = 'discountOrderPrice';
+                            sallaAmount = reward.rewardValue;
+                            sallaMaxAmount = null;
+                            break;
+                        case 'shipping':
+                        case 'discountShipping':
+                            sallaType = 'discountShipping';
+                            sallaAmount = reward.rewardValue;
+                            sallaMaxAmount = null;
+                            sallaFreeShipping = true;
+                            break;
+                        case 'cashback':
+                            sallaType = 'discountOrderPrice';
+                            sallaAmount = reward.rewardValue;
+                            sallaMaxAmount = null;
+                            break;
+                        default:
+                            sallaType = 'discountOrderPercent';
+                            sallaAmount = reward.rewardValue;
+                            sallaMaxAmount = 999999;
+                    }
+
+                    // Generate Salla coupon code
+                    const sallaResponse = await generateCouponCode(
+                        merchant.accessToken,
+                        sallaType,
+                        sallaAmount,
+                        sallaMaxAmount,
+                        sallaFreeShipping,
+                        startDate,
+                        expiryDate,
+                        'LOYALTY'
+                    );
+
+                    if (sallaResponse && sallaResponse.data && sallaResponse.data.code) {
+                        sallaCode = sallaResponse.data.code;
+                        console.log(`✅ Generated Salla coupon code: ${sallaCode}`);
+                    } else {
+                        console.log('⚠️ Failed to generate Salla coupon code, will create coupon without code');
+                    }
+                } catch (codeGenError) {
+                    console.error('Error generating Salla coupon code:', codeGenError.message);
+                    console.log('Will create coupon without code for now');
+                }
+
                 const coupon = await Coupon.create({
-                    code: null, // No Salla code generated yet
+                    code: sallaCode, // Real Salla code generated immediately, or null if failed
                     customer: customer._id,
                     merchant: merchant._id,
                     reward: reward._id,
@@ -131,7 +195,7 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     merchantId: merchant._id,
                     event: 'coupon_generated',
                     points: 0,
-                    metadata: { couponId: coupon._id, rewardId: reward._id, pending: true },
+                    metadata: { couponId: coupon._id, rewardId: reward._id, couponCode: sallaCode || 'PENDING' },
                     createdAt: new Date()
                 });
 
@@ -143,7 +207,7 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                     merchant,
                     event: 'coupon_generated',
                     points: 0,
-                    metadata: { couponId: coupon._id, rewardId: reward._id, pending: true }
+                    metadata: { couponId: coupon._id, rewardId: reward._id, couponCode: sallaCode || 'PENDING' }
                 });
 
                 // Send notification to admin/user (hardcoded email)
@@ -486,14 +550,14 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
         case 'purchase':
             const amount = metadata.amount || 0;
             let totalPointsToAward = 0;
-            
+
             // Calculate base purchase points (amount divided by pointsPerCurrencyUnit)
             const basePoints = calculatePurchasePoints(amount, loyalty.pointsPerCurrencyUnit || 1);
             if (basePoints > 0) {
                 totalPointsToAward += basePoints;
                 result.activities.push({ type: 'base_purchase_points', points: basePoints, amount });
             }
-            
+
             // Add bonus points per purchase if enabled
             if (loyalty.purchasePoints?.enabled) {
                 const bonusPoints = loyalty.purchasePoints.points || 0;
@@ -514,19 +578,19 @@ const loyaltyEngineWrapper = async ({ event, merchant, customer, metadata = {} }
                     }
                 }
             }
-            
+
             // Award all points in a single call to avoid database conflicts
             if (totalPointsToAward > 0) {
-                await awardPoints({ 
-                    merchant, 
-                    customer, 
-                    points: totalPointsToAward, 
-                    event: 'purchase', 
-                    metadata: { 
-                        amount, 
+                await awardPoints({
+                    merchant,
+                    customer,
+                    points: totalPointsToAward,
+                    event: 'purchase',
+                    metadata: {
+                        amount,
                         orderId: metadata.orderId,
-                        breakdown: result.activities 
-                    } 
+                        breakdown: result.activities
+                    }
                 });
                 result.pointsAwarded = totalPointsToAward;
             }

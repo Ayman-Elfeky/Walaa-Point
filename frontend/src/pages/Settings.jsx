@@ -1071,11 +1071,11 @@ const Settings = () => {
                           <span className="text-xs text-secondary-600 dark:text-gray-400">
                             {t('settings.expiresAt')}: {new Date(coupon.expiresAt).toLocaleDateString()}
                           </span>
-                  
-                            <span className="text-xs text-secondary-600 dark:text-gray-400">
-                              {t('settings.couponId')}: {coupon._id}
-                            </span>
-                        
+
+                          <span className="text-xs text-secondary-600 dark:text-gray-400">
+                            {t('settings.couponId')}: {coupon._id}
+                          </span>
+
                           {coupon.used && (
                             <span className="text-xs text-secondary-600 dark:text-gray-400">
                               {t('settings.usedAt')}: {new Date(coupon.usedAt).toLocaleDateString()}
@@ -1087,10 +1087,10 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <span className={`px-2 py-1 rounded-full text-xs ${coupon.used
-                        ? 'bg-gray-100 text-gray-800'
-                        : new Date(coupon.expiresAt) > new Date()
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                      ? 'bg-gray-100 text-gray-800'
+                      : new Date(coupon.expiresAt) > new Date()
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                       }`}>
                       {coupon.used
                         ? t('settings.used')
@@ -1145,13 +1145,13 @@ const Settings = () => {
                 {/* Form Status Indicator - Only show if fields have been touched */}
                 {(fieldsTouched.name || fieldsTouched.description) && (
                   <div className={`p-4 rounded-lg border-2 transition-all ${rewardForm.name?.trim() && rewardForm.description?.trim()
-                      ? 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800'
-                      : 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800'
+                    ? 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800'
+                    : 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800'
                     }`}>
                     <div className="flex items-center space-x-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${rewardForm.name?.trim() && rewardForm.description?.trim()
-                          ? 'bg-green-500 text-white'
-                          : 'bg-yellow-500 text-white'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-yellow-500 text-white'
                         }`}>
                         {rewardForm.name?.trim() && rewardForm.description?.trim() ? (
                           <Check className="h-5 w-5" />
@@ -1161,8 +1161,8 @@ const Settings = () => {
                       </div>
                       <div>
                         <h4 className={`font-semibold ${rewardForm.name?.trim() && rewardForm.description?.trim()
-                            ? 'text-green-800 dark:text-green-200'
-                            : 'text-yellow-800 dark:text-yellow-200'
+                          ? 'text-green-800 dark:text-green-200'
+                          : 'text-yellow-800 dark:text-yellow-200'
                           }`}>
                           {rewardForm.name?.trim() && rewardForm.description?.trim()
                             ? '✅ Ready to Save!'
@@ -1170,8 +1170,8 @@ const Settings = () => {
                           }
                         </h4>
                         <p className={`text-sm ${rewardForm.name?.trim() && rewardForm.description?.trim()
-                            ? 'text-green-600 dark:text-green-300'
-                            : 'text-yellow-600 dark:text-yellow-300'
+                          ? 'text-green-600 dark:text-green-300'
+                          : 'text-yellow-600 dark:text-yellow-300'
                           }`}>
                           {rewardForm.name?.trim() && rewardForm.description?.trim()
                             ? 'Your reward is ready to be saved. Click the save button below.'
@@ -1242,8 +1242,8 @@ const Settings = () => {
                           whileTap={{ scale: 0.98 }}
                           onClick={() => setRewardForm(prev => ({ ...prev, rewardType: option.type }))}
                           className={`cursor-pointer rounded-xl border-2 transition-all ${isSelected
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg'
-                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                             }`}
                         >
                           <div className="p-6">
@@ -1279,10 +1279,10 @@ const Settings = () => {
                           <input
                             type="text"
                             className={`w-full px-4 py-3 rounded-lg border transition-all ${fieldsTouched.name
-                                ? rewardForm.name?.trim()
-                                  ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500'
-                                  : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
-                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                              ? rewardForm.name?.trim()
+                                ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500'
+                                : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
+                              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                               }`}
                             value={rewardForm.name}
                             onChange={(e) => {
@@ -1304,10 +1304,10 @@ const Settings = () => {
                           </label>
                           <textarea
                             className={`w-full px-4 py-3 rounded-lg border transition-all ${fieldsTouched.description
-                                ? rewardForm.description?.trim()
-                                  ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500'
-                                  : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
-                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                              ? rewardForm.description?.trim()
+                                ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500'
+                                : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-2 focus:ring-red-500'
+                              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                               }`}
                             rows="3"
                             value={rewardForm.description}
@@ -1612,10 +1612,10 @@ const Settings = () => {
                     onClick={editingReward ? handleUpdateReward : handleAddReward}
                     disabled={loading}
                     className={`px-8 py-3 rounded-lg transition-all font-semibold shadow-lg flex items-center space-x-2 ${loading
-                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
-                        : rewardForm.name?.trim() && rewardForm.description?.trim()
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
-                          : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
+                      : rewardForm.name?.trim() && rewardForm.description?.trim()
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                       }`}
                     title={!rewardForm.name?.trim() || !rewardForm.description?.trim() ? 'Please fill in reward name and description to save' : 'Save your reward'}
                   >
@@ -1783,8 +1783,8 @@ const Settings = () => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${activeTab === tab.id
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                      : 'text-secondary-600 hover:bg-secondary-50'
+                    ? 'bg-primary-100 text-primary-700 border border-primary-200'
+                    : 'text-secondary-600 hover:bg-secondary-50'
                     }`}
                 >
                   <Icon className="h-5 w-5 mr-3 rtl:mr-0 rtl:ml-3" />

@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 const protect = require('../middlewares/protect');
 
-const { 
+const {
     createReward,
     getAllRewards,
     getRewardById,
     updateReward,
     deleteReward,
-    applyRewardToCustomer, 
-    applyShareRewardToCustomer, 
+    applyRewardToCustomer,
+    applyShareRewardToCustomer,
     generateShareableLink,
     getCoupons,
     getCustomerCoupons

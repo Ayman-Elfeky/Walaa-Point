@@ -12,12 +12,12 @@ const redeemCoupon = async (req, res) => {
 
         const { couponId, orderId } = req.body;
         const merchant = req.merchant;
-        
+
         if (!couponId) {
             console.log('\nMissing coupon ID\n');
             return res.status(400).json({ success: false, message: 'Coupon ID is required' });
         }
-        
+
         const coupon = await Coupon.findOne({ _id: couponId, merchant: merchant._id })
             .populate('reward')
             .populate('customer');
@@ -50,73 +50,16 @@ const redeemCoupon = async (req, res) => {
 
         console.log(`\nCustomer has ${customer.points} points, reward requires ${reward.pointsRequired} points\n`);
 
-        // Generate Salla coupon code if not already generated (Flow 2: On-demand generation)
+        // Flow 1: Coupon code should already exist (generated during point award)
         if (!coupon.code) {
-            console.log('\nCoupon code is null, generating Salla coupon code now...\n');
-            
-            try {
-                // Calculate expiry date (30 days from now)
-                const startDate = new Date().toISOString().split('T')[0];
-                const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                
-                // Map reward types to Salla API format
-                let sallaType, sallaAmount, sallaMaxAmount, sallaFreeShipping = false;
-                
-                switch (reward.rewardType) {
-                    case 'percentage':
-                        sallaType = 'percentage';
-                        sallaAmount = reward.rewardValue;
-                        sallaMaxAmount = 1000; // Default max amount for percentage discounts
-                        break;
-                    case 'fixed':
-                        sallaType = 'fixed';
-                        sallaAmount = reward.rewardValue;
-                        sallaMaxAmount = null;
-                        break;
-                    case 'shipping':
-                        sallaType = 'fixed';
-                        sallaAmount = 0;
-                        sallaFreeShipping = true;
-                        break;
-                    case 'cashback':
-                        sallaType = 'fixed';
-                        sallaAmount = reward.rewardValue;
-                        sallaMaxAmount = null;
-                        break;
-                    default:
-                        sallaType = 'percentage';
-                        sallaAmount = 10;
-                        sallaMaxAmount = 100;
-                }
-                
-                // Generate Salla coupon code
-                const sallaResponse = await generateCouponCode(
-                    merchant.accessToken,
-                    sallaType,
-                    sallaAmount,
-                    sallaMaxAmount,
-                    sallaFreeShipping,
-                    startDate,
-                    expiryDate,
-                    'LOYALTY'
-                );
-                
-                if (sallaResponse && sallaResponse.data && sallaResponse.data.code) {
-                    coupon.code = sallaResponse.data.code;
-                    console.log(`\nSalla coupon code generated: ${coupon.code}\n`);
-                } else {
-                    throw new Error('Failed to generate Salla coupon code');
-                }
-                
-            } catch (codeGenError) {
-                console.error('\nError generating Salla coupon code:', codeGenError.message, '\n');
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Failed to generate coupon code from Salla',
-                    error: codeGenError.message 
-                });
-            }
+            console.log('\nCoupon code is missing! This should not happen in Flow 1.\n');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Coupon code is not available. Please contact support.' 
+            });
         }
+
+        console.log(`\nCoupon code is ready: ${coupon.code}\n`);
 
         // Start a MongoDB session for transaction
         const session = await mongoose.startSession();
@@ -229,6 +172,7 @@ const redeemCoupon = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'Coupon redeemed successfully',
+            couponCode: coupon.code, // Send the coupon code to customer
             benefit,
             customer: {
                 name: customer.name,

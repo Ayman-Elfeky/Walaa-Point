@@ -173,27 +173,27 @@ const getRewardById = async (req, res) => {
         const { id } = req.params;
         console.log(id)
         const merchant = req.merchant;
-        
+
         console.log("The problem may be here: reward");
         const reward = await Reward.findOne({
             _id: id,
             merchant: merchant._id
         });
-        
+
         if (!reward) {
             return res.status(404).json({
                 success: false,
                 message: 'Reward not found'
             });
         }
-        
+
         console.log("The problem may be here: totalCoupons");
         // Get detailed statistics
         const totalCoupons = await Coupon.countDocuments({
             reward: reward._id,
             merchant: merchant._id
         });
-        
+
         console.log("The problem may be here: redeemedCoupons");
         const redeemedCoupons = await Coupon.countDocuments({
             reward: reward._id,
@@ -214,12 +214,12 @@ const getRewardById = async (req, res) => {
             reward: reward._id,
             merchant: merchant._id
         })
-        .populate('customer', 'name email phone customerId')
-        .sort({ createdAt: -1 })
-        .limit(10);
+            .populate('customer', 'name email phone customerId')
+            .sort({ createdAt: -1 })
+            .limit(10);
 
         console.log("NOOOOOO")
-        
+
         res.status(200).json({
             success: true,
             message: 'Reward retrieved successfully',
@@ -603,15 +603,15 @@ const getCoupons = async (req, res) => {
         }
 
         const options = req.query || {};
-        
+
         // Build query filters
         let query = { merchant: merchant._id };
-        
+
         // Add filters based on query parameters
         if (options.used !== undefined) {
             query.used = options.used === 'true';
         }
-        
+
         if (options.expired !== undefined) {
             if (options.expired === 'true') {
                 query.expiresAt = { $lte: new Date() };
@@ -630,19 +630,19 @@ const getCoupons = async (req, res) => {
 
         // Get summary statistics
         const totalCoupons = await Coupon.countDocuments({ merchant: merchant._id });
-        const activeCoupons = await Coupon.countDocuments({ 
-            merchant: merchant._id, 
-            used: false, 
-            expiresAt: { $gt: new Date() } 
+        const activeCoupons = await Coupon.countDocuments({
+            merchant: merchant._id,
+            used: false,
+            expiresAt: { $gt: new Date() }
         });
-        const usedCoupons = await Coupon.countDocuments({ 
-            merchant: merchant._id, 
-            used: true 
+        const usedCoupons = await Coupon.countDocuments({
+            merchant: merchant._id,
+            used: true
         });
-        const expiredCoupons = await Coupon.countDocuments({ 
-            merchant: merchant._id, 
-            used: false, 
-            expiresAt: { $lte: new Date() } 
+        const expiredCoupons = await Coupon.countDocuments({
+            merchant: merchant._id,
+            used: false,
+            expiresAt: { $lte: new Date() }
         });
 
         return res.status(200).json({
@@ -688,8 +688,8 @@ const getCustomerCoupons = async (req, res) => {
             customer: customer._id,
             merchant: merchant._id
         })
-        .populate('reward', 'name description rewardType rewardValue pointsRequired')
-        .sort({ createdAt: -1 });
+            .populate('reward', 'name description rewardType rewardValue pointsRequired')
+            .sort({ createdAt: -1 });
 
         // Categorize coupons
         const availableCoupons = coupons.filter(c => !c.used && new Date(c.expiresAt) > new Date());

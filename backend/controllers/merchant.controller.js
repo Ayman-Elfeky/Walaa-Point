@@ -253,6 +253,7 @@ const updateMerchantProfile = async (req, res) => {
 // Update appearance settings (stored in merchant preferences)
 const updateAppearanceSettings = async (req, res) => {
     try {
+        console.log('\nUpdating appearance settings:', req.body);
         const merchantId = req.merchant._id;
         const updates = req.body;
 

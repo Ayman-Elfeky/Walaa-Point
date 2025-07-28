@@ -62,10 +62,29 @@ export const updateProfileSettings = async (profileData) => {
  */
 export const updateAppearanceSettings = async (settings) => {
   try {
-    const response = await api.put('/merchant/appearance', settings);
+    const response = await api.put('/merchant/identityAndDesign', settings);
+    console.log("Appearance settings updated:", response.data);
     return response.data;
   } catch (error) {
     console.error('Error updating appearance settings:', error);
+    throw error;
+  }
+};
+
+/**
+ * GET identity and design settings
+ * @param {void}
+ * @returns {Promise<Object>} - The identity and design settings
+ * @throws {Error} - If the request fails
+ */
+
+export const getAppearanceSettings = async () => {
+  try {
+    const response = await api.get('/merchant/identityAndDesign');
+    console.log("Appearance settings fetched:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching identity and design settings:', error);
     throw error;
   }
 };

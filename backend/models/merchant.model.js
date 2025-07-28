@@ -94,11 +94,16 @@ const identityAndDesignSchema = new mongoose.Schema({
             enum: ['left', 'right'],
             default: 'right'
         }, // Horizontal position of the button
-        size: {
+        buttonSize: {
             type: String,
             enum: ['small', 'medium', 'large'],
             default: 'medium'
         }, // Size of the button
+        borderRadiusSize: {
+            type: String,
+            enum: ['small', 'medium', 'large', 'x-large'],
+            default: 'large'
+        },
         enableButton: { type: Boolean, default: true } // Enable/disable the button
     }
 }, { _id: false });

@@ -96,10 +96,28 @@ const Settings = () => {
 
   const [appearance, setAppearance] = useState({
     language: i18n.language,
-    primaryColor: '#3b82f6',
     currency: 'SAR',
     dateFormat: 'DD/MM/YYYY',
-    numberFormat: 'en'
+    numberFormat: 'en',
+    // Identity and Design settings matching the schema
+    globalIdentity: {
+      primaryColor: '#596581',
+      secondaryColor: '#fff'
+    },
+    windowProgram: {
+      backgroundColor: 'primary',
+      textColor: 'white'
+    },
+    windowOpenButton: {
+      name: 'Loyalty Program',
+      backgroundColor: 'primary',
+      textColor: 'white',
+      buttonPlaceVertically: 'bottom',
+      buttonPlaceHorizontally: 'right',
+      buttonSize: 'medium',
+      borderRadiusSize: 'large',
+      enableButton: true
+    }
   });
 
   const [security, setSecurity] = useState({
@@ -195,8 +213,51 @@ const Settings = () => {
       }
     };
 
+    const fetchAppearanceSettings = async () => {
+      try {
+        const response = await settingsService.getAppearanceSettings();
+        if (response.success && response.identityAndDesign) {
+          console.log('🎨 Fetched identity and design settings from API:', response.identityAndDesign);
+          const apiSettings = response.identityAndDesign;
+          setAppearance({
+            // Basic settings
+            language: apiSettings.language || i18n.language,
+            currency: apiSettings.currency || 'SAR',
+            dateFormat: apiSettings.dateFormat || 'DD/MM/YYYY',
+            numberFormat: apiSettings.numberFormat || 'en',
+
+            // Identity and Design settings
+            globalIdentity: {
+              primaryColor: apiSettings.globalIdentity?.primaryColor || '#596581',
+              secondaryColor: apiSettings.globalIdentity?.secondaryColor || '#fff'
+            },
+            windowProgram: {
+              backgroundColor: apiSettings.windowProgram?.backgroundColor || 'primary',
+              textColor: apiSettings.windowProgram?.textColor || 'white'
+            },
+            windowOpenButton: {
+              name: apiSettings.windowOpenButton?.name || 'Loyalty Program',
+              backgroundColor: apiSettings.windowOpenButton?.backgroundColor || 'primary',
+              textColor: apiSettings.windowOpenButton?.textColor || 'white',
+              buttonPlaceVertically: apiSettings.windowOpenButton?.buttonPlaceVertically || 'bottom',
+              buttonPlaceHorizontally: apiSettings.windowOpenButton?.buttonPlaceHorizontally || 'right',
+              buttonSize: apiSettings.windowOpenButton?.buttonSize || 'medium',
+              borderRadiusSize: apiSettings.windowOpenButton?.borderRadiusSize || 'large',
+              enableButton: apiSettings.windowOpenButton?.enableButton !== undefined ?
+                apiSettings.windowOpenButton.enableButton : true
+            }
+          });
+        } else {
+          console.warn('No appearance settings received from API');
+        }
+      } catch (error) {
+        console.error('Error fetching appearance settings:', error);
+      }
+    };
+
     getUserInfoFromLocalStorage()
     fetchLoyaltySettings();
+    fetchAppearanceSettings();
     if (activeTab === 'coupons') {
       fetchRewards();
       fetchCoupons();
@@ -850,9 +911,10 @@ const Settings = () => {
   );
 
   const renderAppearanceTab = () => (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Basic Appearance Settings */}
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.appearance')}</h3>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.basicSettings')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
@@ -909,6 +971,302 @@ const Settings = () => {
               <option value="YYYY-MM-DD">{t('settings.dateFormatYYYYMMDD')}</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Global Identity Settings */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.globalIdentity')}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+              {t('settings.primaryColor')}
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                value={appearance.globalIdentity.primaryColor}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  globalIdentity: { ...prev.globalIdentity, primaryColor: e.target.value }
+                }))}
+                className="w-12 h-10 rounded border border-secondary-300 dark:border-gray-600"
+              />
+              <input
+                type="text"
+                value={appearance.globalIdentity.primaryColor}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  globalIdentity: { ...prev.globalIdentity, primaryColor: e.target.value }
+                }))}
+                className="input flex-1"
+                placeholder="#596581"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+              {t('settings.secondaryColor')}
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                value={appearance.globalIdentity.secondaryColor}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  globalIdentity: { ...prev.globalIdentity, secondaryColor: e.target.value }
+                }))}
+                className="w-12 h-10 rounded border border-secondary-300 dark:border-gray-600"
+              />
+              <input
+                type="text"
+                value={appearance.globalIdentity.secondaryColor}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  globalIdentity: { ...prev.globalIdentity, secondaryColor: e.target.value }
+                }))}
+                className="input flex-1"
+                placeholder="#fff"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Window Program Settings */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.windowProgram')}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+              {t('settings.backgroundColor')}
+            </label>
+            <select
+              className="input"
+              value={appearance.windowProgram.backgroundColor}
+              onChange={(e) => setAppearance(prev => ({
+                ...prev,
+                windowProgram: { ...prev.windowProgram, backgroundColor: e.target.value }
+              }))}
+            >
+              <option value="primary">{t('settings.primary')}</option>
+              <option value="secondary">{t('settings.secondary')}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+              {t('settings.textColor')}
+            </label>
+            <select
+              className="input"
+              value={appearance.windowProgram.textColor}
+              onChange={(e) => setAppearance(prev => ({
+                ...prev,
+                windowProgram: { ...prev.windowProgram, textColor: e.target.value }
+              }))}
+            >
+              <option value="black">{t('settings.black')}</option>
+              <option value="white">{t('settings.white')}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Window Open Button Settings */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.windowOpenButton')}</h3>
+
+        {/* Button Enable/Disable */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-gray-800 rounded-lg">
+            <div>
+              <span className="text-secondary-900 dark:text-gray-100 font-medium">{t('settings.enableButton')}</span>
+              <p className="text-sm text-secondary-600 dark:text-gray-300 mt-1">{t('settings.enableButtonDesc')}</p>
+            </div>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={appearance.windowOpenButton.enableButton}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, enableButton: e.target.checked }
+                }))}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        {/* Button Settings (only show if enabled) */}
+        {appearance.windowOpenButton.enableButton && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.buttonName')}
+              </label>
+              <input
+                type="text"
+                value={appearance.windowOpenButton.name}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, name: e.target.value }
+                }))}
+                className="input"
+                placeholder="Loyalty Program"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.buttonBackgroundColor')}
+              </label>
+              <select
+                className="input"
+                value={appearance.windowOpenButton.backgroundColor}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, backgroundColor: e.target.value }
+                }))}
+              >
+                <option value="primary">{t('settings.primary')}</option>
+                <option value="secondary">{t('settings.secondary')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.buttonTextColor')}
+              </label>
+              <select
+                className="input"
+                value={appearance.windowOpenButton.textColor}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, textColor: e.target.value }
+                }))}
+              >
+                <option value="black">{t('settings.black')}</option>
+                <option value="white">{t('settings.white')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.buttonSize')}
+              </label>
+              <select
+                className="input"
+                value={appearance.windowOpenButton.buttonSize}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, buttonSize: e.target.value }
+                }))}
+              >
+                <option value="small">{t('settings.small')}</option>
+                <option value="medium">{t('settings.medium')}</option>
+                <option value="large">{t('settings.large')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.verticalPosition')}
+              </label>
+              <select
+                className="input"
+                value={appearance.windowOpenButton.buttonPlaceVertically}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, buttonPlaceVertically: e.target.value }
+                }))}
+              >
+                <option value="bottom">{t('settings.bottom')}</option>
+                <option value="center">{t('settings.center')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.horizontalPosition')}
+              </label>
+              <select
+                className="input"
+                value={appearance.windowOpenButton.buttonPlaceHorizontally}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, buttonPlaceHorizontally: e.target.value }
+                }))}
+              >
+                <option value="left">{t('settings.left')}</option>
+                <option value="right">{t('settings.right')}</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">
+                {t('settings.borderRadius')}
+              </label>
+              <select
+                className="input"
+                value={appearance.windowOpenButton.borderRadiusSize}
+                onChange={(e) => setAppearance(prev => ({
+                  ...prev,
+                  windowOpenButton: { ...prev.windowOpenButton, borderRadiusSize: e.target.value }
+                }))}
+              >
+                <option value="small">{t('settings.small')}</option>
+                <option value="medium">{t('settings.medium')}</option>
+                <option value="large">{t('settings.large')}</option>
+                <option value="x-large">{t('settings.xLarge')}</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Preview Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-gray-100 mb-4">{t('settings.preview')}</h3>
+        <div className="p-6 border border-secondary-200 dark:border-gray-700 rounded-lg bg-secondary-50 dark:bg-gray-800">
+          <p className="text-sm text-secondary-600 dark:text-gray-400 mb-4">{t('settings.previewDesc')}</p>
+
+          {/* Color Preview */}
+          <div className="flex items-center space-x-4 mb-4">
+            <div
+              className="w-16 h-16 rounded border border-secondary-300 dark:border-gray-600"
+              style={{ backgroundColor: appearance.globalIdentity.primaryColor }}
+            ></div>
+            <div
+              className="w-16 h-16 rounded border border-secondary-300 dark:border-gray-600"
+              style={{ backgroundColor: appearance.globalIdentity.secondaryColor }}
+            ></div>
+            <div className="text-sm">
+              <p className="font-medium text-secondary-700 dark:text-gray-300">{t('settings.colorPreview')}</p>
+              <p className="text-secondary-500 dark:text-gray-400">{t('settings.primaryAndSecondary')}</p>
+            </div>
+          </div>
+
+          {/* Button Preview */}
+          {appearance.windowOpenButton.enableButton && (
+            <div className="relative">
+              <p className="text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2">{t('settings.buttonPreview')}</p>
+              <div className="relative w-full h-32 bg-gray-200 dark:bg-gray-700 rounded border">
+                <button
+                  className={`absolute px-4 py-2 rounded font-medium transition-colors ${appearance.windowOpenButton.buttonSize === 'small' ? 'text-sm px-3 py-1' :
+                      appearance.windowOpenButton.buttonSize === 'large' ? 'text-lg px-6 py-3' :
+                        'text-base px-4 py-2'
+                    } ${appearance.windowOpenButton.borderRadiusSize === 'small' ? 'rounded-sm' :
+                      appearance.windowOpenButton.borderRadiusSize === 'medium' ? 'rounded-md' :
+                        appearance.windowOpenButton.borderRadiusSize === 'large' ? 'rounded-lg' :
+                          'rounded-xl'
+                    } ${appearance.windowOpenButton.buttonPlaceVertically === 'bottom' ? 'bottom-2' : 'top-1/2 transform -translate-y-1/2'
+                    } ${appearance.windowOpenButton.buttonPlaceHorizontally === 'left' ? 'left-2' : 'right-2'
+                    }`}
+                  style={{
+                    backgroundColor: appearance.windowOpenButton.backgroundColor === 'primary' ?
+                      appearance.globalIdentity.primaryColor : appearance.globalIdentity.secondaryColor,
+                    color: appearance.windowOpenButton.textColor
+                  }}
+                >
+                  {appearance.windowOpenButton.name}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

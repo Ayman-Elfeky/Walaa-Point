@@ -121,7 +121,7 @@ const DashboardLayout = ({ children }) => {
                   <div className="w-2 h-2 bg-primary-600 rounded"></div>
                 </div>
               </div>
-              <h1 className="text-xl font-bold text-secondary-900 dark:text-gray-100">Loyalfy</h1>
+              <h1 className="text-xl font-bold text-secondary-900 dark:text-gray-100">Walaa Point</h1>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}

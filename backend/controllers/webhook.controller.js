@@ -202,6 +202,7 @@ const onCustomerLogin = async (req, res) => {
 
         // Find the merchant
         const merchant = await Merchant.findOne({ merchantId });
+        
         if (!merchant) {
             console.log(`\nMerchant not found for ID: ${merchantId}\n`);
             return res.status(404).json({ message: 'Merchant not found' });

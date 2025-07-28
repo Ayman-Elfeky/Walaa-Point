@@ -10,8 +10,8 @@ const redeemCoupon = async (req, res) => {
         console.log('\nRedeeming coupon\n');
         console.log('\nRequest body:', JSON.stringify(req.body, null, 2), '\n');
 
-        const { couponId, orderId } = req.body; // Added orderId extraction
-        const merchant = req.merchant; // Get merchant from request
+        const { couponId } = req.body; // Added orderId extraction
+        // const merchant = req.merchant; // Get merchant from request
 
         if (!couponId) {
             console.log('\nMissing coupon ID\n');
@@ -42,6 +42,7 @@ const redeemCoupon = async (req, res) => {
 
         const reward = coupon.reward;
         const customer = coupon.customer;
+        const merchant = coupon.merchant;
 
         // Check if customer still has enough points
         if (customer.points < reward.pointsRequired) {
@@ -62,10 +63,6 @@ const redeemCoupon = async (req, res) => {
 
         console.log(`\nCoupon code is ready: ${coupon.code}\n`);
 
-        // Start a MongoDB session for transaction
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
         try {
             // Deduct points from customer
             customer.points -= reward.pointsRequired;
@@ -83,14 +80,14 @@ const redeemCoupon = async (req, res) => {
 
             // Update reward usage stats
             reward.currentUsage = (reward.currentUsage || 0) + 1;
-            await reward.save({ session });
+            await reward.save();
 
-            // Save customer and coupon changes within transaction
-            await customer.save({ session });
-            await coupon.save({ session });
+            // Save customer and coupon changes
+            await customer.save();
+            await coupon.save();
 
             // Log the reward redemption activity
-            await CustomerLoyaltyActivity.create([{
+            await CustomerLoyaltyActivity.create({
                 customerId: customer._id,
                 merchantId: merchant._id,
                 event: 'reward_redeemed',
@@ -101,10 +98,9 @@ const redeemCoupon = async (req, res) => {
                     couponCode: coupon.code,
                     orderId: orderId || null
                 }
-            }], { session });
+            });
 
-            // Commit the transaction
-            await session.commitTransaction();
+            console.log(`\nAll database operations completed successfully\n`);
 
             // Send notification to customer
             try {
@@ -140,14 +136,9 @@ const redeemCoupon = async (req, res) => {
             console.log(`\nPoints deducted: ${reward.pointsRequired}\n`);
             console.log(`\nCoupon code: ${coupon.code}\n`);
 
-        } catch (transactionError) {
-            // Rollback transaction on error
-            await session.abortTransaction();
-            console.error('\nTransaction failed, rolling back:', transactionError, '\n');
-            throw transactionError;
-        } finally {
-            // End session
-            session.endSession();
+        } catch (operationError) {
+            console.error('\nDatabase operation failed:', operationError, '\n');
+            throw operationError;
         }
 
         let benefit = '';

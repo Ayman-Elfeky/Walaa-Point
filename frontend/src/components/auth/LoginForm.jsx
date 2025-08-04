@@ -62,9 +62,9 @@ const LoginForm = () => {
           {/* Logo & Title */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-primary-600 rounded"></div>
-              </div>
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                  <div className="w-4 h-4 bg-primary-600 rounded"></div>
+                </div>
             </div>
             <h1 className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mb-2">
               {t('auth.welcome')}

@@ -7,6 +7,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import LoginForm from './components/auth/LoginForm';
 import DashboardLayout from './components/layout/DashboardLayout';
 import './i18n';
+import LandingPage from './pages/LandingPage';
 
 // Lazy load dashboard components
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -40,43 +41,74 @@ const PublicRoute = ({ children }) => {
 
 // App Routes Component
 const AppRoutes = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <Routes>
       {/* Public Routes */}
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           <PublicRoute>
             <LoginForm />
           </PublicRoute>
-        } 
+        }
+      />
+
+      <Route
+        path="/landing"
+        element={
+          <PublicRoute>
+            <LandingPage />
+          </PublicRoute>
+        }
       />
 
       {/* Protected Routes */}
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
           <ProtectedRoute>
             <DashboardLayout>
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/" element={<Dashboard />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/rewards" element={<Rewards />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/subscription" element={<Subscription />} />
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </Suspense>
             </DashboardLayout>
           </ProtectedRoute>
-        } 
+        }
       />
 
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* Root route - redirect based on authentication */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ?
+            <Navigate to="/dashboard" replace /> :
+            <Navigate to="/login" replace />
+        }
+      />
+
+      {/* Catch all - redirect to appropriate default */}
+      <Route
+        path="*"
+        element={
+          isAuthenticated ?
+            <Navigate to="/dashboard" replace /> :
+            <Navigate to="/landing" replace />
+        }
+      />
     </Routes>
   );
 };
@@ -89,7 +121,7 @@ const App = () => {
         <AuthProvider>
           <div className="min-h-screen bg-secondary-50 dark:bg-gray-900 transition-colors">
             <AppRoutes />
-            
+
             {/* Toast Notifications */}
             <Toaster
               position="top-right"

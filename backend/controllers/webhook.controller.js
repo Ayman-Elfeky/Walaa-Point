@@ -63,7 +63,7 @@ const onOrderCreated = async (req, res) => {
         // Define totalAmount at the top to avoid reference errors
         // Handle different possible data structures from Salla webhook
         let totalAmount = 0;
-        
+
         if (data.amounts && data.amounts.total && data.amounts.total.amount) {
             totalAmount = data.amounts.total.amount;
         } else if (data.total && data.total.amount) {
@@ -102,7 +102,7 @@ const onOrderCreated = async (req, res) => {
 
             // Create new customer from order data
             console.log('🔄 DEBUG: About to create new customer with totalAmount:', totalAmount);
-            console.log(data.customer?.full_name); 
+            console.log(data.customer?.full_name);
             customer = new Customer({
                 customerId: data.customer.id,
                 name: data.customer?.full_name || null,
@@ -138,7 +138,7 @@ const onOrderCreated = async (req, res) => {
             console.log('🔄 DEBUG: About to update existing customer with totalAmount:', totalAmount);
             customer.orderCount = (customer.orderCount || 0) + 1;
             customer.totalSpent = (customer.totalSpent || 0) + totalAmount;
-            if(!customer.name) {
+            if (!customer.name) {
                 customer.name = data.customer?.full_name;
             }
             await customer.save();
@@ -156,7 +156,7 @@ const onOrderCreated = async (req, res) => {
         console.log('Processing purchase points...');
         console.log('🔍 DEBUG: Merchant loyalty settings:', JSON.stringify(merchantFound.loyaltySettings, null, 2));
         console.log('🔍 DEBUG: Customer before purchase:', `ID: ${customer.customerId}, Current Points: ${customer.points || 0}`);
-        
+
         console.log('🔍 DEBUG: Loyalty engine result before');
         const result = await loyaltyEngine({
             event: 'purchase',
@@ -164,9 +164,9 @@ const onOrderCreated = async (req, res) => {
             customer,
             metadata
         });
-        
+
         console.log('🔍 DEBUG: Loyalty engine result after:', JSON.stringify(result, null, 2));
-        
+
         // Fetch updated customer to show final points
         const updatedCustomer = await Customer.findOne({ customerId: data.customer.id, merchant: merchantFound._id });
         console.log('🔍 DEBUG: Customer after purchase:', `ID: ${updatedCustomer.customerId}, Final Points: ${updatedCustomer.points}, Total Spent: ${updatedCustomer.totalSpent}`);
@@ -188,21 +188,59 @@ const onOrderCreated = async (req, res) => {
     }
 };
 
+/* *
+*
+{
+  "event": "customer.login",
+  "merchant": 1305146709,
+  "created_at": "Tue Jan 25 2022 12:36:49 GMT+0300",
+  "data": {
+    "id": 225167971,
+    "first_name": "User",
+    "last_name": "Mohammed",
+    "mobile": 555555555,
+    "mobile_code": "+966",
+    "email": "test@gmail.com",
+    "urls": {
+      "customer": "https://salla.sa/dev-wofftr4xsra5xtlv/profile",
+      "admin": "https://s.salla.sa/customers/l7mYBdgXA9xJwWZRZK8WD42GNkZbjvRO"
+    },
+    "avatar": "https://i.ibb.co/jyqRQfQ/avatar-male.webp",
+    "gender": "female",
+    "birthday": {
+      "date": "1997-06-03 00:00:00.000000",
+      "timezone_type": 3,
+      "timezone": "Asia/Riyadh"
+    },
+    "city": "الرياض",
+    "country": "السعودية",
+    "country_code": "SA",
+    "currency": "AED",
+    "location": "14",
+    "updated_at": {
+      "date": "2022-01-24 14:26:55.000000",
+      "timezone_type": 3,
+      "timezone": "Asia/Riyadh"
+    }
+  }
+}
+ */
+
 const onCustomerLogin = async (req, res) => {
     try {
         console.log('\nCustomer login webhook received\n');
-        console.log('\nRequest body:', req.body, '\n');
+        console.log('\nRequest body when customer login:', req.body, '\n');
 
         const { merchant: merchantId, data } = req.body;
 
-        if (!merchantId || !data?.customer?.id) {
+        if (!merchantId || !data?.id) {
             console.log('\nMissing merchant ID or customer ID in webhook data\n');
             return res.status(400).json({ message: 'Missing required data' });
         }
 
         // Find the merchant
         const merchant = await Merchant.findOne({ merchantId });
-        
+
         if (!merchant) {
             console.log(`\nMerchant not found for ID: ${merchantId}\n`);
             return res.status(404).json({ message: 'Merchant not found' });
@@ -210,12 +248,12 @@ const onCustomerLogin = async (req, res) => {
 
         // Find the customer
         const customer = await Customer.findOne({
-            customerId: data.customer.id,
+            customerId: data.id,
             merchant: merchant._id
         });
 
         if (!customer) {
-            console.log(`\nCustomer not found for ID: ${data.customer.id}\n`);
+            console.log(`\nCustomer not found for ID: ${data.id}\n`);
             return res.status(404).json({ message: 'Customer not found' });
         }
 
@@ -245,31 +283,37 @@ const onCustomerLogin = async (req, res) => {
                 console.log(`\nBirthday points awarded: ${birthdayPoints} points\n`);
 
                 return res.status(200).json({
+                    success: true,
                     message: 'Happy Birthday! Points awarded',
                     isBirthday: true,
                     pointsAwarded: birthdayPoints,
+                    data: customer,
                     result
                 });
             } else {
                 console.log('\nBirthday detected but birthday points not enabled for merchant\n');
                 return res.status(200).json({
+                    success: true,
                     message: 'Happy Birthday!',
                     isBirthday: true,
-                    pointsAwarded: 0
+                    pointsAwarded: 0,
+                    data: customer
                 });
             }
         } else {
             console.log('\nNot customer\'s birthday today\n');
             return res.status(200).json({
+                success: true,
                 message: 'Customer login processed',
-                isBirthday: false
+                isBirthday: false,
+                data: customer
             });
-        }
+    }
 
     } catch (error) {
-        console.error('\nError processing customer login:', error, '\n');
-        res.status(500).json({ message: 'Internal server error' });
-    }
+    console.error('\nError processing customer login:', error, '\n');
+    res.status(500).json({ message: 'Internal server error' });
+}
 }
 
 const onFeedbackCreated = async (req, res) => {
@@ -547,7 +591,7 @@ const onOrderDeleted = async (req, res) => {
         // Handle points deduction and spending reduction for deleted order
         if (data.total && data.total > 0) {
             const orderAmount = data.total;
-            
+
             // Reduce customer's total spending
             customer.totalSpent = Math.max(0, (customer.totalSpent || 0) - orderAmount);
             customer.orderCount = Math.max(0, (customer.orderCount || 0) - 1);

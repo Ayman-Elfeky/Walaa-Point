@@ -76,7 +76,7 @@ const AppRoutes = () => {
             <DashboardLayout>
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/rewards" element={<Rewards />} />
                   <Route path="/analytics" element={<Analytics />} />
@@ -96,7 +96,7 @@ const AppRoutes = () => {
         element={
           isAuthenticated ?
             <Navigate to="/dashboard" replace /> :
-            <Navigate to="/login" replace />
+            <Navigate to="/landing" replace />
         }
       />
 

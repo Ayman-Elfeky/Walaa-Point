@@ -110,12 +110,12 @@ start_backend() {
     # Start backend with PM2 or directly
     if command -v pm2 &> /dev/null; then
         print_status "Using PM2 to manage backend process..."
-        pm2 start server.js --name "loyalty-backend" --log "$LOG_DIR/backend.log" --error "$LOG_DIR/backend-error.log" --time
+        pm2 start server.js --name "loyalty-backend" --log "../$LOG_DIR/backend.log" --error "../$LOG_DIR/backend-error.log" --time
         pm2 save
     else
         print_warning "PM2 not found. Starting backend directly..."
-        nohup node server.js > "$LOG_DIR/backend.log" 2> "$LOG_DIR/backend-error.log" &
-        echo $! > "$PID_DIR/backend.pid"
+        nohup node server.js > "../$LOG_DIR/backend.log" 2> "../$LOG_DIR/backend-error.log" &
+        echo $! > "../$PID_DIR/backend.pid"
     fi
     
     cd ..
@@ -148,12 +148,12 @@ start_frontend() {
     # Start frontend with PM2 or directly
     if command -v pm2 &> /dev/null; then
         print_status "Using PM2 to manage frontend process..."
-        pm2 start "npm run dev" --name "loyalty-frontend" --log "$LOG_DIR/frontend.log" --error "$LOG_DIR/frontend-error.log" --time
+        pm2 start "npm run dev" --name "loyalty-frontend" --log "../$LOG_DIR/frontend.log" --error "../$LOG_DIR/frontend-error.log" --time
         pm2 save
     else
         print_warning "PM2 not found. Starting frontend directly..."
-        nohup npm run dev > "$LOG_DIR/frontend.log" 2> "$LOG_DIR/frontend-error.log" &
-        echo $! > "$PID_DIR/frontend.pid"
+        nohup npm run dev > "../$LOG_DIR/frontend.log" 2> "../$LOG_DIR/frontend-error.log" &
+        echo $! > "../$PID_DIR/frontend.pid"
     fi
     
     cd ..

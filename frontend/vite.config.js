@@ -6,6 +6,6 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 7000,
-    allowedHosts: ['app7000.maayn.me'] // 👈 Add your custom hostname here
+    allowedHosts: ['app7000.maayn.me', 'srv852192.hstgr.cloud'] // 👈 Add your custom hostname here
   }
 })

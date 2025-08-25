@@ -1,5 +1,5 @@
 import { Copyright, CopyrightIcon, FacebookIcon, HandMetalIcon, InstagramIcon, MessageCircle, PhoneIcon, TwitterIcon } from "lucide-react";
-import Logo from "./Logo";
+import Logo from "./LandingLogo";
 import NavItems from "./NavItems";
 import CopyrightSentence from "./CopyrightSentence";
 
@@ -9,7 +9,7 @@ const Footer = () => {
             <div className=" pt-5 flex flex-col items-start justify-between w-full">
                 <Logo />
                 <ul className="flex items-center justify-center w-full py-5">
-                    <NavItems styling={"m-3"}/>
+                    <NavItems styling={"m-3"} />
                 </ul>
                 <div className="flex items-center justify-between w-full py-5">
                     <CopyrightSentence company={"LoyalCore"} />

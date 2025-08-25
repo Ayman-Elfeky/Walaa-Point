@@ -55,13 +55,14 @@
     "password": "Password",
     "rememberMe": "Remember Me",
     "forgotPassword": "Forgot your password?",
-    "welcome": "Welcome to Loyalty Dashboard",
+    "welcome": "Welcome to Walaa Point",
     "signInToAccount": "Sign in to your account",
     "invalidCredentials": "Invalid email or password",
     "signInSuccess": "Successfully signed in",
     "signOutSuccess": "Successfully signed out"
   },
   "navigation": {
+    "logoTitle": "Walaa Point",
     "dashboard": "Dashboard",
     "customers": "Customers",
     "rewards": "Rewards",

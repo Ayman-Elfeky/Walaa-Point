@@ -1,5 +1,5 @@
 import NavItems from './NavItems'
-import Logo from './Logo'
+import LandingLogo from './LandingLogo'
 import Button from './Button'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
@@ -11,13 +11,13 @@ const Navbar = () => {
 
     const toggleNavBar = () => {
         setMobile(!mobile);
-}; 
+    };
 
     return (
         <nav className="sticky top-0 py-3 backdrop-blur-lg border-b border-neutral-700/80">
             <div className="container px-4 mx-auto relative text-sm">
                 <div className="flex justify-between items-center">
-                    <Logo />
+                    <LandingLogo />
                     <ul className="hidden lg:flex ltr:ml-14 ltr:space-x-12">
                         <NavItems styling={"btn-hover px-3 py-2 rounded-lg"} />
                     </ul>

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '../../utils';
 import toast from 'react-hot-toast';
+import Logo from '../common/Logo';
 
 const LoginForm = () => {
   const { t, i18n } = useTranslation();
@@ -61,10 +62,8 @@ const LoginForm = () => {
         >
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                  <div className="w-4 h-4 bg-primary-600 rounded"></div>
-                </div>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Logo />
             </div>
             <h1 className="text-2xl font-bold text-secondary-900 dark:text-gray-100 mb-2">
               {t('auth.welcome')}
@@ -155,7 +154,7 @@ const LoginForm = () => {
                   {...register('rememberMe')}
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 dark:border-gray-600 rounded"
                 />
-                <span className="ml-2 text-sm text-secondary-600 dark:text-gray-400">
+                <span className={`${i18n.language === 'ar' ? 'mr-2' : 'ml-2'} text-sm text-secondary-600 dark:text-gray-400`}>
                   {t('auth.rememberMe')}
                 </span>
               </label>
@@ -201,7 +200,7 @@ const LoginForm = () => {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-xs text-secondary-500 dark:text-gray-400">
-              © {year} Loyalfy Dashboard. All rights reserved.
+              {i18n.language === 'ar' ? `© ${year} ولاء بوينت. كل الحقوق محفوظة.` :`© ${year} Walaa Point. All rights reserved.`}
             </p>
           </div>
         </motion.div>

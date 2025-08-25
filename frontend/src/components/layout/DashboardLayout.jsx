@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '../../utils';
 import toast from 'react-hot-toast';
+import Logo from '../common/Logo';
 
 const DashboardLayout = ({ children }) => {
   const { t, i18n } = useTranslation();
@@ -116,12 +117,10 @@ const DashboardLayout = ({ children }) => {
               'flex items-center',
               i18n.language === 'ar' ? 'space-x-reverse space-x-3' : 'space-x-3'
             )}>
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center">
-                  <div className="w-2 h-2 bg-primary-600 rounded"></div>
-                </div>
+              <div className="w-10 h-10">
+                <Logo />
               </div>
-              <h1 className="text-xl font-bold text-secondary-900 dark:text-gray-100">Walaa Point</h1>
+              <h1 className="text-xl font-bold text-secondary-900 dark:text-gray-100">{t('navigation.logoTitle')}</h1>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}

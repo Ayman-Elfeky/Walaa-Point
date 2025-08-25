@@ -55,13 +55,14 @@
     "password": "كلمة المرور",
     "rememberMe": "تذكرني",
     "forgotPassword": "نسيت كلمة المرور؟",
-    "welcome": "مرحباً بك في لوحة الولاء",
+    "welcome": "مرحباً بكم في برنامج ولاء بوينت",
     "signInToAccount": "تسجيل الدخول إلى حسابك",
     "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "signInSuccess": "تم تسجيل الدخول بنجاح",
     "signOutSuccess": "تم تسجيل الخروج بنجاح"
   },
   "navigation": {
+    "logoTitle": "ولاء بوينت",
     "dashboard": "لوحة التحكم",
     "customers": "العملاء",
     "rewards": "المكافآت",

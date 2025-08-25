@@ -38,7 +38,7 @@ const loginMerchant = async (req, res) => {
                 path: '/' // Cookie is valid for all paths
             });
 
-            res.status(200).json({
+            res.status(200).json({ 
                 success: true,
                 merchant: {
                     name: merchant.merchantName,

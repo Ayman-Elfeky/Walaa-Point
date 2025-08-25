@@ -3,6 +3,10 @@ const Merchant = require('../models/merchant.model');
 
 const protect = async (req, res, next) => {
     const token = req.cookies.jwt; // Get JWT from cookies
+    // const method = req.method;
+    // const body = req.body;
+    // const headers = req.headers.Authorization;
+    // let token = headers.split(' ')[1];
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized, no token provided' });

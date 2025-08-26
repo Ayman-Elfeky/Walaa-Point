@@ -95,7 +95,7 @@ app.get('/', (req, res) => {
     res.send('<h1>Welcome to the Loyalty App API</h1><p>Use the API prefix <code>' + process.env.API_PREFIX + '</code> for all endpoints.</p>');
 });
 // console.log(webhookRoute)
-app.use('/webhook', webhookRoute);
+app.use('/api/webhook', webhookRoute);
 
 // Start server
 const PORT = process.env.PORT;

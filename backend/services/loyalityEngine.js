@@ -90,7 +90,8 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
             // For each new coupon earned (in case of large point award)
             for (let i = 0; i < newCouponsCount - prevCouponsCount; i++) {
                 // Find the active reward for this merchant (could be more advanced logic)
-                const reward = await Reward.findOne({ merchant: merchant._id, isActive: true });
+                // Populate merchant to ensure merchant.email is available for notifications
+                const reward = await Reward.findOne({ merchant: merchant._id, isActive: true }).populate('merchant');
                 if (!reward) {
                     // Notify admin if no active reward exists
                     try {
@@ -101,8 +102,12 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                             `Alert: No active reward found for customer ${customer.name || customer.email}`,
                             ''
                         );
-                        await sendEmail('aywork73@gmail.com', 'No Active Reward Found', emailHtml);
-                        console.log(`Admin notified: No active reward for merchant ${merchant._id}`);
+                        if (merchant.email) {
+                            await sendEmail(merchant.email, 'No Active Reward Found', emailHtml);
+                            console.log(`Admin notified (merchant email: ${merchant.email}): No active reward for merchant ${merchant._id}`);
+                        } else {
+                            console.log('Merchant email not found, admin notification not sent.');
+                        }
                     } catch (err) {
                         console.error('Failed to notify admin about missing reward:', err.message);
                     }
@@ -182,8 +187,12 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                             `Coupon Generation Error: Failed to generate Salla coupon code for customer ${customer.name || customer.email}. Reason: ${codeGenError.message}`,
                             'ERROR'
                         );
-                        await sendEmail('aywork73@gmail.com', 'Salla Coupon Generation Failed', emailHtml);
-                        console.log(`❌ Admin notified about Salla API failure for customer ${customer._id}`);
+                        if (merchant.email) {
+                            await sendEmail(merchant.email, 'Salla Coupon Generation Failed', emailHtml);
+                            console.log(`❌ Admin notified (merchant email: ${merchant.email}) about Salla API failure for customer ${customer._id}`);
+                        } else {
+                            console.log('Merchant email not found, admin notification not sent.');
+                        }
                     } catch (notifyErr) {
                         console.error('Failed to notify admin about Salla API failure:', notifyErr.message);
                     }
@@ -243,8 +252,12 @@ const awardPoints = async ({ merchant, customer, points, event, metadata = {} })
                         `A new coupon has been successfully generated for customer ${customer.name || customer.email} with code: ${sallaCode}`,
                         sallaCode
                     );
-                    await sendEmail('aywork73@gmail.com', 'New Coupon Generated Successfully', emailHtml);
-                    console.log(`✅ Admin notified about successful coupon generation: ${coupon._id}`);
+                    if (merchant.email) {
+                        await sendEmail(merchant.email, 'New Coupon Generated Successfully', emailHtml);
+                        console.log(`✅ Admin notified (merchant email: ${merchant.email}) about successful coupon generation: ${coupon._id}`);
+                    } else {
+                        console.log('Merchant email not found, admin notification not sent.');
+                    }
                 } catch (err) {
                     console.error('Failed to notify admin about successful coupon:', err.message);
                 }

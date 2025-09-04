@@ -12,8 +12,8 @@ module.exports.sendEmail = async (userEmail, subject, htmlTemplate) => {
         });
 
         const mailOptions = {
-            from: `"Loyalfy" <${process.env.APP_EMAIL_ADDRESS}>`,
-            to: 'aywork73@gmail.com',
+            from: `"Walaa Point" <${process.env.APP_EMAIL_ADDRESS}>`,
+            to: userEmail,
             subject: subject,
             html: htmlTemplate
         }

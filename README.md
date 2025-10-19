@@ -1,6 +1,7 @@
-# Loyalty Program Backend for Salla Merchants
+# Loyalty Management System for Salla Merchants
 
 A comprehensive loyalty program backend system built for Salla merchants, providing points-based customer rewards, coupon generation, analytics, and subscription management.
+(Note: For Login must be installed from a merchant in Salla)
 
 ## 🚀 Features
 
